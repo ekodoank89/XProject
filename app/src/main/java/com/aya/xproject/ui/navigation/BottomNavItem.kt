@@ -20,6 +20,6 @@ sealed class BottomNavItem(
     data object Setting : BottomNavItem("setting", "SET", Icons.Filled.Settings)
 
     companion object {
-        val items = listOf(Favorite, Jitter, Home, Option, Setting)
+        val items = listOf(Favorite, Jitter, Home, Setting, Option)
     }
 }
