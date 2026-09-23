@@ -77,7 +77,6 @@ fun MapsScreen(
         Surface(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .systemBarsPadding()
                 .padding(16.dp),
             shape = RoundedCornerShape(12.dp),
             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
