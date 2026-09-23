@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.aya.xproject.ui.common.ComingSoonScreen
 import com.aya.xproject.ui.maps.MapsScreen
+import com.aya.xproject.ui.option.OptionScreen
 
 @Composable
 fun XProjectNavHost(
@@ -28,7 +29,7 @@ fun XProjectNavHost(
             ComingSoonScreen(title = "JIT")
         }
         composable(BottomNavItem.Option.route) {
-            ComingSoonScreen(title = "OPT")
+            OptionScreen()
         }
         composable(BottomNavItem.Setting.route) {
             ComingSoonScreen(title = "SET")
