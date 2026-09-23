@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
@@ -35,7 +34,6 @@ fun MapsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val cameraPositionState = rememberCameraPositionState {
-        // fromLatLngZoom: cukup titik tengah + zoom (tilt & bearing otomatis 0)
         position = CameraPosition.fromLatLngZoom(
             LatLng(uiState.center.latitude, uiState.center.longitude),
             uiState.zoom
@@ -73,25 +71,27 @@ fun MapsScreen(
                 .offset(y = (-24).dp)
         )
 
-        // Info koordinat tengah (data mengalir dari ViewModel -> UI)
-        Surface(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(16.dp),
-            shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-            tonalElevation = 4.dp
-        ) {
-            Text(
-                text = String.format(
-                    Locale.US,
-                    "%.6f, %.6f",
-                    uiState.center.latitude,
-                    uiState.center.longitude
-                ),
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
+        // Chip koordinat: hanya tampil jika switch di menu OPT aktif
+        if (uiState.isCoordinateChipVisible) {
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                tonalElevation = 4.dp
+            ) {
+                Text(
+                    text = String.format(
+                        Locale.US,
+                        "%.6f, %.6f",
+                        uiState.center.latitude,
+                        uiState.center.longitude
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
         }
     }
 }
