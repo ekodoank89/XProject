@@ -35,7 +35,8 @@ fun MapsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition(
+        // fromLatLngZoom: cukup titik tengah + zoom (tilt & bearing otomatis 0)
+        position = CameraPosition.fromLatLngZoom(
             LatLng(uiState.center.latitude, uiState.center.longitude),
             uiState.zoom
         )
