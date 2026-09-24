@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aya.xproject.data.repository.MapCenterRepository
 import com.aya.xproject.data.repository.MapSettingsRepository
+import com.aya.xproject.data.repository.MarkerRepository
 import com.aya.xproject.domain.model.MapCenter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,18 +16,23 @@ import javax.inject.Inject
 @HiltViewModel
 class MapsViewModel @Inject constructor(
     private val mapCenterRepository: MapCenterRepository,
-    mapSettingsRepository: MapSettingsRepository
+    mapSettingsRepository: MapSettingsRepository,
+    private val markerRepository: MarkerRepository
 ) : ViewModel() {
 
     val uiState: StateFlow<MapsUiState> = combine(
         mapCenterRepository.center,
         mapCenterRepository.pendingCameraTarget,
-        mapSettingsRepository.settings
-    ) { center, pendingTarget, settings ->
+        mapSettingsRepository.settings,
+        markerRepository.grbMarker,
+        markerRepository.gjkMarker
+    ) { center, pendingTarget, settings, grb, gjk ->
         MapsUiState(
             center = center,
             isCoordinateChipVisible = settings.isCoordinateChipVisible,
-            pendingCameraTarget = pendingTarget
+            pendingCameraTarget = pendingTarget,
+            grbMarker = grb,
+            gjkMarker = gjk
         )
     }.stateIn(
         scope = viewModelScope,
@@ -40,5 +46,22 @@ class MapsViewModel @Inject constructor(
 
     fun onCameraTargetConsumed() {
         mapCenterRepository.consumePendingTarget()
+    }
+
+    /** Play/stop GRB: play mengunci posisi pin saat itu, stop menghapus marker. */
+    fun toggleGrb() {
+        val isActive = markerRepository.grbMarker.value != null
+        markerRepository.setGrb(if (isActive) null else mapCenterRepository.center.value)
+    }
+
+    /** Play/stop GJK: play mengunci posisi pin saat itu, stop menghapus marker. */
+    fun toggleGjk() {
+        val isActive = markerRepository.gjkMarker.value != null
+        markerRepository.setGjk(if (isActive) null else mapCenterRepository.center.value)
+    }
+
+    /** Tap chip koordinat: minta kamera (pin) bergerak ke koordinat marker. */
+    fun onMoveToRequested(target: MapCenter) {
+        mapCenterRepository.requestMoveTo(target)
     }
 }
