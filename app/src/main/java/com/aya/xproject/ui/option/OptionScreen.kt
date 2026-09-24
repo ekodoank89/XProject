@@ -64,6 +64,7 @@ fun OptionScreen(
             modifier = Modifier.padding(16.dp)
         )
 
+        // ===== Section: Chip koordinat =====
         OptionSwitchItem(
             title = "Chip koordinat",
             subtitle = "Tampilkan/sembunyikan chip koordinat pin di peta",
@@ -97,6 +98,37 @@ fun OptionScreen(
             subtitle = "Tampilkan/sembunyikan chip koordinat jitter GJK (bergerak live)",
             checked = settings.isGjkJitterChipVisible,
             onCheckedChange = { viewModel.onGjkJitterChipVisibilityChanged(it) }
+        )
+
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+        // ===== Section: Visual peta (titik jitter & lingkaran radius) =====
+        OptionSwitchItem(
+            title = "Titik jitter GRB",
+            subtitle = "Tampilkan/sembunyikan titik bergerak jitter GRB di peta",
+            checked = settings.isGrbJitterDotVisible,
+            onCheckedChange = { viewModel.onGrbJitterDotVisibilityChanged(it) }
+        )
+
+        OptionSwitchItem(
+            title = "Radius maksimal GRB",
+            subtitle = "Tampilkan/sembunyikan lingkaran radius jitter GRB di peta",
+            checked = settings.isGrbRadiusCircleVisible,
+            onCheckedChange = { viewModel.onGrbRadiusCircleVisibilityChanged(it) }
+        )
+
+        OptionSwitchItem(
+            title = "Titik jitter GJK",
+            subtitle = "Tampilkan/sembunyikan titik bergerak jitter GJK di peta",
+            checked = settings.isGjkJitterDotVisible,
+            onCheckedChange = { viewModel.onGjkJitterDotVisibilityChanged(it) }
+        )
+
+        OptionSwitchItem(
+            title = "Radius maksimal GJK",
+            subtitle = "Tampilkan/sembunyikan lingkaran radius jitter GJK di peta",
+            checked = settings.isGjkRadiusCircleVisible,
+            onCheckedChange = { viewModel.onGjkRadiusCircleVisibilityChanged(it) }
         )
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
