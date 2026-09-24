@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class OptionViewModel @Inject constructor(
-    mapSettingsRepository: MapSettingsRepository,
+    private val mapSettingsRepository: MapSettingsRepository, // ← ditambah 'private val'
     private val favoriteBackupManager: FavoriteBackupManager
 ) : ViewModel() {
 
