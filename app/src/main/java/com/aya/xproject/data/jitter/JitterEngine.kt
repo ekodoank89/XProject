@@ -109,7 +109,7 @@ class JitterEngine @Inject constructor(
         return if (distance <= settings.maxRadiusMeters) {
             candidate
         } else {
-            clampToRadius(candidate, center, settings.maxRadiusMeters)
+            clampToRadius(candidate, center, settings.maxRadiusMeters.toDouble())
         }
     }
 
