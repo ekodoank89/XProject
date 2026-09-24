@@ -10,6 +10,9 @@ data class MapSettings(
     val isGjkChipVisible: Boolean = true,
     val isGrbJitterChipVisible: Boolean = true,
     val isGjkJitterChipVisible: Boolean = true,
-    val isJitterDotVisible: Boolean = true,
-    val isJitterRadiusVisible: Boolean = true
+    // Visual peta: titik jitter & lingkaran radius
+    val isGrbJitterDotVisible: Boolean = true,
+    val isGrbRadiusCircleVisible: Boolean = true,
+    val isGjkJitterDotVisible: Boolean = true,
+    val isGjkRadiusCircleVisible: Boolean = true
 )
