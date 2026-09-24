@@ -21,14 +21,16 @@ class MapsViewModel @Inject constructor(
 ) : ViewModel() {
 
     val uiState: StateFlow<MapsUiState> = combine(
-        mapCenterRepository.center,
+        mapCenterRepository.snapshot,
         mapCenterRepository.pendingCameraTarget,
         mapSettingsRepository.settings,
         markerRepository.grbMarker,
         markerRepository.gjkMarker
-    ) { center, pendingTarget, settings, grb, gjk ->
+    ) { snap, pendingTarget, settings, grb, gjk ->
         MapsUiState(
-            center = center,
+            center = snap.center,
+            zoom = snap.zoom,
+            isCenterLoaded = snap.isLoaded,
             isCoordinateChipVisible = settings.isCoordinateChipVisible,
             isGrbChipVisible = settings.isGrbChipVisible,
             isGjkChipVisible = settings.isGjkChipVisible,
@@ -50,12 +52,7 @@ class MapsViewModel @Inject constructor(
         mapCenterRepository.consumePendingTarget()
     }
 
-    /**
-     * Play/stop GRB.
-     * [target] adalah posisi kamera LIVE saat tombol ditekan (dikirim dari UI),
-     * sehingga marker selalu presisi di titik tengah yang terlihat pengguna —
-     * tidak bergantung pada salinan posisi di repository.
-     */
+    /** Play/stop GRB dengan posisi kamera LIVE saat tombol ditekan. */
     fun toggleGrb(target: MapCenter) {
         val isActive = markerRepository.grbMarker.value != null
         markerRepository.setGrb(if (isActive) null else target)
