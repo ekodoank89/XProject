@@ -1,5 +1,6 @@
 package com.aya.xproject.ui.maps
 
+import com.aya.xproject.data.repository.CameraRequest
 import com.aya.xproject.domain.model.MapCenter
 
 data class MapsUiState(
@@ -11,7 +12,7 @@ data class MapsUiState(
     val isGjkChipVisible: Boolean = true,
     val isGrbJitterChipVisible: Boolean = true,
     val isGjkJitterChipVisible: Boolean = true,
-    val pendingCameraTarget: MapCenter? = null,
+    val pendingCameraTarget: CameraRequest? = null,
     val grbMarker: MapCenter? = null,
     val gjkMarker: MapCenter? = null,
     // Posisi jitter yang bergerak (null = jitter tidak aktif)
