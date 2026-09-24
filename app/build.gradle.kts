@@ -17,13 +17,11 @@ android {
         versionCode = 1
         versionName = "1.0.0"
 
-        // Mengisi ${MAPS_API_KEY} di AndroidManifest dari environment variable CI
         manifestPlaceholders["MAPS_API_KEY"] = System.getenv("MAPS_API_KEY") ?: ""
     }
 
     signingConfigs {
         create("release") {
-            // File ini di-decode oleh workflow ke app/release.keystore
             storeFile = file("release.keystore")
             storePassword = System.getenv("KEYSTORE_PASSWORD")
             keyAlias = System.getenv("KEY_ALIAS")
@@ -70,6 +68,10 @@ dependencies {
 
     implementation(libs.play.services.maps)
     implementation(libs.maps.compose)
+
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
