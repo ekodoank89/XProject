@@ -65,7 +65,7 @@ private const val MAX_ZOOM = 21f
 /** Durasi animasi kamera untuk tombol kontrol (ms). */
 private const val CAMERA_ANIMATION_MS = 500
 
-/** Ukuran sisi tombol play/stop — persegi (1:1), setara lebar pill versi sebelumnya. */
+/** Ukuran sisi tombol play/stop — persegi (1:1). */
 private val TrackButtonSize = 80.dp
 
 // Warna aksen GRB (hijau) dan GJK (merah)
@@ -88,10 +88,13 @@ fun MapsScreen(
     }
 
     // ===== Titik biru lokasi (my location) =====
+    // Flag hanya boleh true jika izin fine location benar-benar terpenuhi,
+    // kalau tidak app akan crash (SecurityException).
     var isMyLocationEnabled by remember {
         mutableStateOf(hasFineLocationPermission(context))
     }
 
+    // Saat kembali ke app, status izin dicek ulang agar titik biru mengikuti kondisi terkini.
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -135,7 +138,8 @@ fun MapsScreen(
 
     // ===== Aksi tombol kontrol peta =====
 
-    /** Auto focus: kamera ke lokasi GPS pengguna + kompas reset ke utara. */
+    /** Auto focus: kamera ke lokasi GPS pengguna + kompas reset ke utara.
+     *  Jika lokasi belum tersedia (GPS belum fix), kompas tetap direset. */
     @SuppressLint("MissingPermission") // izin dicek manual di baris pertama
     fun autoFocus() {
         if (!hasFineLocationPermission(context)) return
@@ -143,12 +147,15 @@ fun MapsScreen(
             scope.launch {
                 val current = cameraPositionState.position
                 val target = if (location != null) {
+                    // Lokasi ditemukan: tuju titik biru lokasi pengguna
                     LatLng(location.latitude, location.longitude)
                 } else {
+                    // GPS belum fix: tetap di posisi pin sekarang
                     current.target
                 }
                 cameraPositionState.animate(
                     CameraUpdateFactory.newCameraPosition(
+                        // target, zoom (tidak berubah), tilt 0, bearing 0 (utara)
                         CameraPosition(target, current.zoom, 0f, 0f)
                     ),
                     CAMERA_ANIMATION_MS
@@ -183,11 +190,12 @@ fun MapsScreen(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
             properties = MapProperties(
+                // Menampilkan titik biru lokasi pengguna di peta
                 isMyLocationEnabled = isMyLocationEnabled
             ),
             uiSettings = MapUiSettings(
-                compassEnabled = false,
-                zoomControlsEnabled = false,
+                compassEnabled = false,      // kompas bawaan Google dimatikan
+                zoomControlsEnabled = false, // tombol +/- bawaan dimatikan
                 myLocationButtonEnabled = false,
                 mapToolbarEnabled = false
             )
@@ -198,7 +206,7 @@ fun MapsScreen(
             // ===== Marker GRB (hijau) — tampil hanya saat play =====
             uiState.grbMarker?.let { grb ->
                 val grbMarkerState = rememberMarkerState(
-                    key = grb,
+                    key = "grb:${grb.latitude},${grb.longitude}",
                     position = LatLng(grb.latitude, grb.longitude)
                 )
                 Marker(
@@ -211,7 +219,7 @@ fun MapsScreen(
             // ===== Marker GJK (merah) — tampil hanya saat play =====
             uiState.gjkMarker?.let { gjk ->
                 val gjkMarkerState = rememberMarkerState(
-                    key = gjk,
+                    key = "gjk:${gjk.latitude},${gjk.longitude}",
                     position = LatLng(gjk.latitude, gjk.longitude)
                 )
                 Marker(
@@ -223,6 +231,7 @@ fun MapsScreen(
         }
 
         // Pin overlay: selalu di tengah layar.
+        // Offset -24dp (setengah tinggi ikon 48dp) agar ujung pin tepat di titik tengah.
         Icon(
             imageVector = Icons.Filled.LocationOn,
             contentDescription = null,
