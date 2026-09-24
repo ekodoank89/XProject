@@ -14,8 +14,12 @@ object PrefsKeys {
     val CHIP_GJK = booleanPreferencesKey("chip_gjk_visible")
     val CHIP_GRB_JITTER = booleanPreferencesKey("chip_grb_jitter_visible")
     val CHIP_GJK_JITTER = booleanPreferencesKey("chip_gjk_jitter_visible")
-    val JITTER_DOT = booleanPreferencesKey("jitter_dot_visible")
-    val JITTER_RADIUS = booleanPreferencesKey("jitter_radius_visible")
+
+    // Visual peta: titik jitter & lingkaran radius
+    val GRB_JITTER_DOT = booleanPreferencesKey("grb_jitter_dot_visible")
+    val GRB_RADIUS_CIRCLE = booleanPreferencesKey("grb_radius_circle_visible")
+    val GJK_JITTER_DOT = booleanPreferencesKey("gjk_jitter_dot_visible")
+    val GJK_RADIUS_CIRCLE = booleanPreferencesKey("gjk_radius_circle_visible")
 
     val CENTER_LAT = stringPreferencesKey("center_lat")
     val CENTER_LNG = stringPreferencesKey("center_lng")
