@@ -2,10 +2,10 @@ package com.aya.xproject.ui.maps
 
 import com.aya.xproject.domain.model.MapCenter
 
-// Ubah koordinat default (Jakarta) sesuai kebutuhan
 data class MapsUiState(
     val center: MapCenter = MapCenter(-6.2088, 106.8456),
     val zoom: Float = 15f,
+    val isCenterLoaded: Boolean = false,
     val isCoordinateChipVisible: Boolean = true,
     val isGrbChipVisible: Boolean = true,
     val isGjkChipVisible: Boolean = true,
