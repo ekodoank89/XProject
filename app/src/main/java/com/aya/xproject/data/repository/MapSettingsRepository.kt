@@ -32,7 +32,9 @@ class MapSettingsRepository @Inject constructor(
             MapSettings(
                 isCoordinateChipVisible = prefs[PrefsKeys.CHIP_COORDINATE] ?: true,
                 isGrbChipVisible = prefs[PrefsKeys.CHIP_GRB] ?: true,
-                isGjkChipVisible = prefs[PrefsKeys.CHIP_GJK] ?: true
+                isGjkChipVisible = prefs[PrefsKeys.CHIP_GJK] ?: true,
+                isGrbJitterChipVisible = prefs[PrefsKeys.CHIP_GRB_JITTER] ?: true,
+                isGjkJitterChipVisible = prefs[PrefsKeys.CHIP_GJK_JITTER] ?: true
             )
         }
         .stateIn(scope, SharingStarted.Eagerly, MapSettings())
@@ -45,6 +47,12 @@ class MapSettingsRepository @Inject constructor(
 
     fun setGjkChipVisible(visible: Boolean) =
         write { it[PrefsKeys.CHIP_GJK] = visible }
+
+    fun setGrbJitterChipVisible(visible: Boolean) =
+        write { it[PrefsKeys.CHIP_GRB_JITTER] = visible }
+
+    fun setGjkJitterChipVisible(visible: Boolean) =
+        write { it[PrefsKeys.CHIP_GJK_JITTER] = visible }
 
     private fun write(block: (MutablePreferences) -> Unit) {
         scope.launch { dataStore.edit(block) }
