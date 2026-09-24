@@ -7,5 +7,7 @@ package com.aya.xproject.domain.model
 data class MapSettings(
     val isCoordinateChipVisible: Boolean = true,
     val isGrbChipVisible: Boolean = true,
-    val isGjkChipVisible: Boolean = true
+    val isGjkChipVisible: Boolean = true,
+    val isGrbJitterChipVisible: Boolean = true,
+    val isGjkJitterChipVisible: Boolean = true
 )
