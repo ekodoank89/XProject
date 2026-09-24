@@ -312,14 +312,16 @@ fun MapsScreen(
                 }
             }
 
-            // Chip koordinat jitter GRB — pergerakan live, tampil saat jitter aktif
-            uiState.grbJitterPosition?.let { jitterPos ->
-                CoordinateChip(
-                    label = "JITTER GRB",
-                    coordinate = jitterPos,
-                    accent = GrbGreen,
-                    onClick = { viewModel.onMoveToRequested(jitterPos) }
-                )
+            // Chip koordinat jitter GRB — bisa disembunyikan dari menu OPT
+            if (uiState.isGrbJitterChipVisible) {
+                uiState.grbJitterPosition?.let { jitterPos ->
+                    CoordinateChip(
+                        label = "JITTER GRB",
+                        coordinate = jitterPos,
+                        accent = GrbGreen,
+                        onClick = { viewModel.onMoveToRequested(jitterPos) }
+                    )
+                }
             }
 
             // Chip koordinat marker GJK
@@ -334,14 +336,16 @@ fun MapsScreen(
                 }
             }
 
-            // Chip koordinat jitter GJK — pergerakan live, tampil saat jitter aktif
-            uiState.gjkJitterPosition?.let { jitterPos ->
-                CoordinateChip(
-                    label = "JITTER GJK",
-                    coordinate = jitterPos,
-                    accent = GjkRed,
-                    onClick = { viewModel.onMoveToRequested(jitterPos) }
-                )
+            // Chip koordinat jitter GJK — bisa disembunyikan dari menu OPT
+            if (uiState.isGjkJitterChipVisible) {
+                uiState.gjkJitterPosition?.let { jitterPos ->
+                    CoordinateChip(
+                        label = "JITTER GJK",
+                        coordinate = jitterPos,
+                        accent = GjkRed,
+                        onClick = { viewModel.onMoveToRequested(jitterPos) }
+                    )
+                }
             }
 
             // Chip koordinat pin (mengikuti switch di menu OPT)
