@@ -1,5 +1,7 @@
 package com.aya.xproject.ui.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -19,7 +21,12 @@ fun XProjectNavHost(
     NavHost(
         navController = navController,
         startDestination = BottomNavItem.Home.route,
-        modifier = modifier
+        modifier = modifier,
+        // Tanpa animasi transisi antar tab — perpindahan instan
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None },
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { ExitTransition.None }
     ) {
         composable(BottomNavItem.Home.route) {
             MapsScreen()
