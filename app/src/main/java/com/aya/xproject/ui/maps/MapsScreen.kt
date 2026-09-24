@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -16,6 +17,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.filled.ZoomOut
 import androidx.compose.material3.Icon
@@ -32,6 +35,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -44,11 +48,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aya.xproject.domain.model.MapCenter
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -58,6 +65,10 @@ private const val MAX_ZOOM = 21f
 
 /** Durasi animasi kamera untuk tombol kontrol (ms). */
 private const val CAMERA_ANIMATION_MS = 500
+
+// Warna aksen GRB (hijau) dan GJK (merah)
+private val GrbGreen = Color(0xFF2E7D32)
+private val GjkRed = Color(0xFFC62828)
 
 @Composable
 fun MapsScreen(
@@ -81,8 +92,7 @@ fun MapsScreen(
         mutableStateOf(hasFineLocationPermission(context))
     }
 
-    // Saat kembali ke app (mis. dari Settings setelah mencabut/memberi izin),
-    // status izin dicek ulang agar titik biru mengikuti kondisi terkini.
+    // Saat kembali ke app, status izin dicek ulang agar titik biru mengikuti kondisi terkini.
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -111,7 +121,7 @@ fun MapsScreen(
         }
     }
 
-    // Ada permintaan pindah kamera (dari menu Favorite) → animasikan, lalu tandai selesai
+    // Ada permintaan pindah kamera (dari Favorite / chip GRB/GJK) → animasikan
     LaunchedEffect(uiState.pendingCameraTarget) {
         val target = uiState.pendingCameraTarget ?: return@LaunchedEffect
         cameraPositionState.animate(
@@ -127,8 +137,7 @@ fun MapsScreen(
     // ===== Aksi tombol kontrol peta =====
 
     /** Auto focus: animasikan kamera ke lokasi GPS pengguna (titik biru)
-     *  + fungsi kompas: kamera direset menghadap utara (bearing 0) dan tilt diratakan.
-     *  Jika lokasi belum tersedia (GPS belum fix), kompas tetap direset. */
+     *  + fungsi kompas: reset bearing ke utara dan tilt diratakan. */
     @SuppressLint("MissingPermission") // izin dicek manual di baris pertama
     fun autoFocus() {
         if (!hasFineLocationPermission(context)) return
@@ -136,15 +145,12 @@ fun MapsScreen(
             scope.launch {
                 val current = cameraPositionState.position
                 val target = if (location != null) {
-                    // Lokasi ditemukan: tuju titik biru lokasi pengguna
                     LatLng(location.latitude, location.longitude)
                 } else {
-                    // GPS belum fix: tetap di posisi pin sekarang
                     current.target
                 }
                 cameraPositionState.animate(
                     CameraUpdateFactory.newCameraPosition(
-                        // target, zoom (tidak berubah), tilt 0, bearing 0 (utara)
                         CameraPosition(target, current.zoom, 0f, 0f)
                     ),
                     CAMERA_ANIMATION_MS
@@ -179,19 +185,35 @@ fun MapsScreen(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
             properties = MapProperties(
-                // Menampilkan titik biru lokasi pengguna di peta
                 isMyLocationEnabled = isMyLocationEnabled
             ),
             uiSettings = MapUiSettings(
-                compassEnabled = false,      // kompas bawaan Google dimatikan
-                zoomControlsEnabled = false, // tombol +/- bawaan dimatikan
+                compassEnabled = false,
+                zoomControlsEnabled = false,
                 myLocationButtonEnabled = false,
                 mapToolbarEnabled = false
             )
         )
 
+        // ===== Marker GRB (hijau) — tampil hanya saat play =====
+        uiState.grbMarker?.let { grb ->
+            Marker(
+                state = MarkerState(position = LatLng(grb.latitude, grb.longitude)),
+                title = "GRB",
+                icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
+            )
+        }
+
+        // ===== Marker GJK (merah) — tampil hanya saat play =====
+        uiState.gjkMarker?.let { gjk ->
+            Marker(
+                state = MarkerState(position = LatLng(gjk.latitude, gjk.longitude)),
+                title = "GJK",
+                icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
+            )
+        }
+
         // Pin overlay: selalu di tengah layar.
-        // Offset -24dp (setengah tinggi ikon 48dp) agar ujung pin tepat di titik tengah.
         Icon(
             imageVector = Icons.Filled.LocationOn,
             contentDescription = null,
@@ -201,6 +223,27 @@ fun MapsScreen(
                 .size(48.dp)
                 .offset(y = (-24).dp)
         )
+
+        // ===== Tombol play/stop GRB & GJK: kiri bawah =====
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(start = 16.dp, bottom = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            TrackButton(
+                label = "GRB",
+                isActive = uiState.grbMarker != null,
+                accent = GrbGreen,
+                onClick = viewModel::toggleGrb
+            )
+            TrackButton(
+                label = "GJK",
+                isActive = uiState.gjkMarker != null,
+                accent = GjkRed,
+                onClick = viewModel::toggleGjk
+            )
+        }
 
         // ===== Tombol kontrol peta: kanan bawah =====
         Column(
@@ -226,26 +269,52 @@ fun MapsScreen(
             )
         }
 
-        // Chip koordinat: hanya tampil jika switch di menu OPT aktif
-        if (uiState.isCoordinateChipVisible) {
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp),
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                tonalElevation = 4.dp
-            ) {
-                Text(
-                    text = String.format(
-                        Locale.US,
-                        "%.6f, %.6f",
-                        uiState.center.latitude,
-                        uiState.center.longitude
-                    ),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        // ===== Chip koordinat: tengah bawah =====
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Chip koordinat marker GRB — tap: pin ke koordinat marker
+            uiState.grbMarker?.let { grb ->
+                CoordinateChip(
+                    label = "GRB",
+                    coordinate = grb,
+                    accent = GrbGreen,
+                    onClick = { viewModel.onMoveToRequested(grb) }
                 )
+            }
+
+            // Chip koordinat marker GJK — tap: pin ke koordinat marker
+            uiState.gjkMarker?.let { gjk ->
+                CoordinateChip(
+                    label = "GJK",
+                    coordinate = gjk,
+                    accent = GjkRed,
+                    onClick = { viewModel.onMoveToRequested(gjk) }
+                )
+            }
+
+            // Chip koordinat pin (mengikuti switch di menu OPT)
+            if (uiState.isCoordinateChipVisible) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                    tonalElevation = 4.dp
+                ) {
+                    Text(
+                        text = String.format(
+                            Locale.US,
+                            "%.6f, %.6f",
+                            uiState.center.latitude,
+                            uiState.center.longitude
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
             }
         }
     }
@@ -255,6 +324,71 @@ fun MapsScreen(
 private fun hasFineLocationPermission(context: android.content.Context): Boolean =
     ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
+
+/** Tombol play/stop pelacakan GRB/GJK. */
+@Composable
+private fun TrackButton(
+    label: String,
+    isActive: Boolean,
+    accent: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
+        color = if (isActive) accent else MaterialTheme.colorScheme.surface,
+        tonalElevation = 3.dp,
+        shadowElevation = 6.dp,
+        modifier = modifier
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                imageVector = if (isActive) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                contentDescription = null,
+                tint = if (isActive) Color.White else accent,
+                modifier = Modifier.size(20.dp)
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = if (isActive) Color.White else MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+/** Chip koordinat marker (warna sesuai markernya). Tap: pin menuju koordinat. */
+@Composable
+private fun CoordinateChip(
+    label: String,
+    coordinate: MapCenter,
+    accent: Color,
+    onClick: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = accent,
+        shadowElevation = 4.dp,
+        modifier = Modifier.clickable(onClick = onClick)
+    ) {
+        Text(
+            text = "$label  " + String.format(
+                Locale.US,
+                "%.6f, %.6f",
+                coordinate.latitude,
+                coordinate.longitude
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+        )
+    }
+}
 
 @Composable
 private fun MapControlButton(
