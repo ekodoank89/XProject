@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class OptionViewModel @Inject constructor(
-    private val mapSettingsRepository: MapSettingsRepository, // ← ditambah 'private val'
+    private val mapSettingsRepository: MapSettingsRepository,
     private val favoriteBackupManager: FavoriteBackupManager
 ) : ViewModel() {
 
@@ -26,6 +26,14 @@ class OptionViewModel @Inject constructor(
 
     fun onCoordinateChipVisibilityChanged(visible: Boolean) {
         mapSettingsRepository.setCoordinateChipVisible(visible)
+    }
+
+    fun onGrbChipVisibilityChanged(visible: Boolean) {
+        mapSettingsRepository.setGrbChipVisible(visible)
+    }
+
+    fun onGjkChipVisibilityChanged(visible: Boolean) {
+        mapSettingsRepository.setGjkChipVisible(visible)
     }
 
     fun exportFavorites(uri: Uri) {
