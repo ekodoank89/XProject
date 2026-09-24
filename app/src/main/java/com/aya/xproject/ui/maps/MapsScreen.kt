@@ -1,6 +1,7 @@
 package com.aya.xproject.ui.maps
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +42,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aya.xproject.domain.model.MapCenter
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -69,6 +71,11 @@ fun MapsScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Klien lokasi untuk fitur auto focus (fokus ke titik biru)
+    val fusedLocationClient = remember {
+        LocationServices.getFusedLocationProviderClient(context)
+    }
 
     // ===== Titik biru lokasi (my location) =====
     // Flag hanya boleh true jika izin fine location benar-benar terpenuhi,
@@ -122,18 +129,30 @@ fun MapsScreen(
 
     // ===== Aksi tombol kontrol peta =====
 
-    /** Auto focus: kamera fokus kembali ke titik tengah (pin) + fungsi kompas:
-     *  arah kamera direset menghadap utara (bearing 0) dan tilt diratakan. */
+    /** Auto focus: animasikan kamera ke lokasi GPS pengguna (titik biru)
+     *  + fungsi kompas: kamera direset menghadap utara (bearing 0) dan tilt diratakan.
+     *  Jika lokasi belum tersedia (GPS belum fix), kompas tetap direset. */
+    @SuppressLint("MissingPermission") // izin dicek manual di baris pertama
     fun autoFocus() {
-        scope.launch {
-            val current = cameraPositionState.position
-            cameraPositionState.animate(
-                CameraUpdateFactory.newCameraPosition(
-                    // 4 parameter: target, zoom, tilt, bearing
-                    CameraPosition(current.target, current.zoom, 0f, 0f)
-                ),
-                CAMERA_ANIMATION_MS
-            )
+        if (!hasFineLocationPermission(context)) return
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            scope.launch {
+                val current = cameraPositionState.position
+                val target = if (location != null) {
+                    // Lokasi ditemukan: tuju titik biru lokasi pengguna
+                    LatLng(location.latitude, location.longitude)
+                } else {
+                    // GPS belum fix: tetap di posisi pin sekarang
+                    current.target
+                }
+                cameraPositionState.animate(
+                    CameraUpdateFactory.newCameraPosition(
+                        // target, zoom (tidak berubah), tilt 0, bearing 0 (utara)
+                        CameraPosition(target, current.zoom, 0f, 0f)
+                    ),
+                    CAMERA_ANIMATION_MS
+                )
+            }
         }
     }
 
