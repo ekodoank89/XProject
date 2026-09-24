@@ -37,7 +37,7 @@ fun JitterScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .statusBarsPadding() // turun agar tidak tertutup status bar
+            .statusBarsPadding()
     ) {
 
         // ===== Tab menu utama: GRB / GJK =====
@@ -90,15 +90,15 @@ fun JitterScreen(
                 steps = 13
             )
 
-            // ===== Slider: Radius maksimal (1–10.5 m, kelipatan 0.5) =====
+            // ===== Slider: Radius maksimal (1–30 m, kelipatan 0.5) =====
             JitterSliderItem(
                 title = "Radius maksimal",
                 valueText = String.format(Locale.US, "%.1f meter", settings.maxRadiusMeters),
                 value = settings.maxRadiusMeters,
                 onValueChange = viewModel::onRadiusChanged,
-                valueRange = 1f..10.5f,
-                // (10.5 - 1) / 0.5 - 1 = 18 titik antara ujung slider
-                steps = 18
+                valueRange = 1f..30f,
+                // (30 - 1) / 0.5 - 1 = 57 titik antara ujung slider
+                steps = 57
             )
 
             // ===== Tombol Default (untuk tab yang sedang aktif) =====
