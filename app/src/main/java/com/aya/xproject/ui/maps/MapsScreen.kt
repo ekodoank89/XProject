@@ -3,6 +3,8 @@ package com.aya.xproject.ui.maps
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,6 +36,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -49,6 +52,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
@@ -68,7 +72,7 @@ private const val CAMERA_ANIMATION_MS = 500
 private val TrackButtonSize = 80.dp
 
 // Warna aksen GRB (hijau) dan GJK (merah).
-// Dipakai BERSAMA oleh chip koordinat dan marker — warna pasti identik.
+// Dipakai BERSAMA oleh chip, marker, titik jitter, dan lingkaran radius.
 private val GrbGreen = Color(0xFF2E7D32)
 private val GjkRed = Color(0xFFC62828)
 
@@ -205,7 +209,37 @@ fun MapsScreen(
                 mapToolbarEnabled = false
             )
         ) {
-            // ⚠️ Marker WAJIB berada di dalam content lambda GoogleMap.
+            // ⚠️ Semua overlay (Circle/Marker) WAJIB di dalam content lambda GoogleMap.
+
+            // ===== Lingkaran radius jitter GRB (live dari slider JIT) =====
+            if (uiState.isGrbJitterRadiusReady) {
+                uiState.grbMarker?.let { grb ->
+                    uiState.grbJitterRadius?.let { radius ->
+                        Circle(
+                            center = LatLng(grb.latitude, grb.longitude),
+                            radius = radius.toDouble(),
+                            strokeColor = GrbGreen,
+                            strokeWidth = 3f,
+                            fillColor = GrbGreen.copy(alpha = 0.15f)
+                        )
+                    }
+                }
+            }
+
+            // ===== Lingkaran radius jitter GJK (live dari slider JIT) =====
+            if (uiState.isGjkJitterRadiusReady) {
+                uiState.gjkMarker?.let { gjk ->
+                    uiState.gjkJitterRadius?.let { radius ->
+                        Circle(
+                            center = LatLng(gjk.latitude, gjk.longitude),
+                            radius = radius.toDouble(),
+                            strokeColor = GjkRed,
+                            strokeWidth = 3f,
+                            fillColor = GjkRed.copy(alpha = 0.15f)
+                        )
+                    }
+                }
+            }
 
             // ===== Marker GRB: icon pin hijau (pusat jitter GRB) =====
             uiState.grbMarker?.let { grb ->
@@ -234,6 +268,39 @@ fun MapsScreen(
                     title = "GJK"
                 ) {
                     PinIcon(tint = GjkRed)
+                }
+            }
+
+            // ===== Titik jitter GRB: kecil, bergerak live =====
+            uiState.grbJitterPosition?.let { jitterPos ->
+                val grbDotState = rememberMarkerState(
+                    key = "grb_jitter:${jitterPos.latitude},${jitterPos.longitude}",
+                    position = LatLng(jitterPos.latitude, jitterPos.longitude)
+                )
+                MarkerComposable(
+                    keys = arrayOf(jitterPos.latitude, jitterPos.longitude),
+                    state = grbDotState,
+                    title = "JITTER GRB",
+                    // anchor tengah: titik tepat di koordinat, bukan menggantung
+                    anchor = Offset(0.5f, 0.5f)
+                ) {
+                    JitterDot(tint = GrbGreen)
+                }
+            }
+
+            // ===== Titik jitter GJK: kecil, bergerak live =====
+            uiState.gjkJitterPosition?.let { jitterPos ->
+                val gjkDotState = rememberMarkerState(
+                    key = "gjk_jitter:${jitterPos.latitude},${jitterPos.longitude}",
+                    position = LatLng(jitterPos.latitude, jitterPos.longitude)
+                )
+                MarkerComposable(
+                    keys = arrayOf(jitterPos.latitude, jitterPos.longitude),
+                    state = gjkDotState,
+                    title = "JITTER GJK",
+                    anchor = Offset(0.5f, 0.5f)
+                ) {
+                    JitterDot(tint = GjkRed)
                 }
             }
         }
@@ -381,6 +448,18 @@ private fun PinIcon(tint: Color) {
         contentDescription = null,
         tint = tint,
         modifier = Modifier.size(48.dp)
+    )
+}
+
+/** Titik jitter di peta: lingkaran kecil berisi warna aksen + ring putih agar kontras. */
+@Composable
+private fun JitterDot(tint: Color) {
+    Box(
+        modifier = Modifier
+            .size(18.dp)
+            .border(3.dp, Color.White, CircleShape)
+            .padding(3.dp)
+            .background(tint, CircleShape)
     )
 }
 
