@@ -2,6 +2,7 @@ package com.aya.xproject.ui.maps
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aya.xproject.data.jitter.JitterEngine
 import com.aya.xproject.data.repository.MapCenterRepository
 import com.aya.xproject.data.repository.MapSettingsRepository
 import com.aya.xproject.data.repository.MarkerRepository
@@ -17,10 +18,12 @@ import javax.inject.Inject
 class MapsViewModel @Inject constructor(
     private val mapCenterRepository: MapCenterRepository,
     mapSettingsRepository: MapSettingsRepository,
-    private val markerRepository: MarkerRepository
+    private val markerRepository: MarkerRepository,
+    jitterEngine: JitterEngine
 ) : ViewModel() {
 
-    val uiState: StateFlow<MapsUiState> = combine(
+    // State dasar: peta, preferensi, marker
+    private val baseState = combine(
         mapCenterRepository.snapshot,
         mapCenterRepository.pendingCameraTarget,
         mapSettingsRepository.settings,
@@ -38,6 +41,18 @@ class MapsViewModel @Inject constructor(
             grbMarker = grb,
             gjkMarker = gjk
         )
+    }
+
+    // Gabungkan dengan posisi jitter yang bergerak live
+    val uiState: StateFlow<MapsUiState> = combine(
+        baseState,
+        jitterEngine.grbPosition,
+        jitterEngine.gjkPosition
+    ) { state, grbJitter, gjkJitter ->
+        state.copy(
+            grbJitterPosition = grbJitter,
+            gjkJitterPosition = gjkJitter
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -52,19 +67,19 @@ class MapsViewModel @Inject constructor(
         mapCenterRepository.consumePendingTarget()
     }
 
-    /** Play/stop GRB dengan posisi kamera LIVE saat tombol ditekan. */
+    /** Play/stop GRB: play → marker tersimpan → jitter otomatis jalan. */
     fun toggleGrb(target: MapCenter) {
         val isActive = markerRepository.grbMarker.value != null
         markerRepository.setGrb(if (isActive) null else target)
     }
 
-    /** Play/stop GJK — sama seperti GRB. */
+    /** Play/stop GJK: play → marker tersimpan → jitter otomatis jalan. */
     fun toggleGjk(target: MapCenter) {
         val isActive = markerRepository.gjkMarker.value != null
         markerRepository.setGjk(if (isActive) null else target)
     }
 
-    /** Tap chip koordinat: minta kamera (pin) bergerak ke koordinat marker. */
+    /** Tap chip koordinat: minta kamera (pin) bergerak ke koordinat target. */
     fun onMoveToRequested(target: MapCenter) {
         mapCenterRepository.requestMoveTo(target)
     }
