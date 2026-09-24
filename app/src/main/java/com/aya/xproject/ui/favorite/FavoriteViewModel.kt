@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aya.xproject.data.repository.FavoriteRepository
 import com.aya.xproject.data.repository.MapCenterRepository
+import com.aya.xproject.data.repository.MarkerRepository
 import com.aya.xproject.data.repository.SessionPreferencesRepository
 import com.aya.xproject.domain.model.Favorite
 import com.aya.xproject.domain.model.FavoriteTab
@@ -24,6 +25,7 @@ import javax.inject.Inject
 class FavoriteViewModel @Inject constructor(
     private val favoriteRepository: FavoriteRepository,
     private val mapCenterRepository: MapCenterRepository,
+    private val markerRepository: MarkerRepository,
     private val sessionPreferences: SessionPreferencesRepository
 ) : ViewModel() {
 
@@ -164,15 +166,23 @@ class FavoriteViewModel @Inject constructor(
     }
 
     /**
-     * Tap nama favorite: pin menuju koordinat, lalu AUTO PLAY sesuai kategori
-     * favorit (tab GRB → play GRB, tab GJK → play GJK) dengan pusat jitter
-     * di koordinat favorit.
+     * Tap nama favorite:
+     * 1. AUTO PLAY langsung sesuai kategori favorit (GRB/GJK) — marker dipasang
+     *    di koordinat favorit → jitter otomatis aktif dengan pusat di markernya.
+     *    Play dieksekusi langsung di sini (bukan menumpang pada rantai konsumsi
+     *    kamera) agar selalu bekerja.
+     * 2. Pin menuju koordinat favorit (lompatan instan di layar peta).
+     * Jika kategori sedang play di titik lain → menjadi re-center/re-play.
      */
     fun selectFavorite(favorite: Favorite) {
-        mapCenterRepository.requestMoveTo(
-            MapCenter(favorite.latitude, favorite.longitude),
-            playTab = JitterTab.valueOf(favorite.tab.name) // enum paralel: GRB/GJK
-        )
+        val target = MapCenter(favorite.latitude, favorite.longitude)
+
+        when (favorite.tab.name) {
+            JitterTab.GRB.name -> markerRepository.setGrb(target)
+            JitterTab.GJK.name -> markerRepository.setGjk(target)
+        }
+
+        mapCenterRepository.requestMoveTo(target)
     }
 
     private fun formatCoordinate(value: Double): String =
