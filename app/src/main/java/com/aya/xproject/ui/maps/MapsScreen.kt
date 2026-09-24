@@ -88,13 +88,10 @@ fun MapsScreen(
     }
 
     // ===== Titik biru lokasi (my location) =====
-    // Flag hanya boleh true jika izin fine location benar-benar terpenuhi,
-    // kalau tidak app akan crash (SecurityException).
     var isMyLocationEnabled by remember {
         mutableStateOf(hasFineLocationPermission(context))
     }
 
-    // Saat kembali ke app, status izin dicek ulang agar titik biru mengikuti kondisi terkini.
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -112,12 +109,17 @@ fun MapsScreen(
         )
     }
 
+    /** Posisi kamera LIVE saat ini — sumber kebenaran untuk aksi play. */
+    fun currentMapCenter(): MapCenter {
+        val target = cameraPositionState.position.target
+        return MapCenter(target.latitude, target.longitude)
+    }
+
     // Peta berhenti bergerak → simpan posisi pin (titik tengah) ke repository
     LaunchedEffect(cameraPositionState.isMoving) {
         if (!cameraPositionState.isMoving) {
-            val target = cameraPositionState.position.target
             viewModel.onMapCenterChanged(
-                MapCenter(target.latitude, target.longitude),
+                currentMapCenter(),
                 cameraPositionState.position.zoom
             )
         }
@@ -126,14 +128,20 @@ fun MapsScreen(
     // Ada permintaan pindah kamera (dari Favorite / chip GRB/GJK) → animasikan
     LaunchedEffect(uiState.pendingCameraTarget) {
         val target = uiState.pendingCameraTarget ?: return@LaunchedEffect
+        val zoom = cameraPositionState.position.zoom
         cameraPositionState.animate(
             CameraUpdateFactory.newLatLngZoom(
                 LatLng(target.latitude, target.longitude),
-                cameraPositionState.position.zoom
+                zoom
             ),
             700
         )
         viewModel.onCameraTargetConsumed()
+        // PENTING: simpan posisi final secara EKSPLISIT setelah animasi selesai.
+        // Event isMoving setelah animasi programatik tidak konsisten memicu
+        // pembaruan salinan di repository — tanpa baris ini, "DARI PIN" dan
+        // indikator koordinat bisa memegang posisi lama.
+        viewModel.onMapCenterChanged(target, zoom)
     }
 
     // ===== Aksi tombol kontrol peta =====
@@ -147,15 +155,12 @@ fun MapsScreen(
             scope.launch {
                 val current = cameraPositionState.position
                 val target = if (location != null) {
-                    // Lokasi ditemukan: tuju titik biru lokasi pengguna
                     LatLng(location.latitude, location.longitude)
                 } else {
-                    // GPS belum fix: tetap di posisi pin sekarang
                     current.target
                 }
                 cameraPositionState.animate(
                     CameraUpdateFactory.newCameraPosition(
-                        // target, zoom (tidak berubah), tilt 0, bearing 0 (utara)
                         CameraPosition(target, current.zoom, 0f, 0f)
                     ),
                     CAMERA_ANIMATION_MS
@@ -190,12 +195,11 @@ fun MapsScreen(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
             properties = MapProperties(
-                // Menampilkan titik biru lokasi pengguna di peta
                 isMyLocationEnabled = isMyLocationEnabled
             ),
             uiSettings = MapUiSettings(
-                compassEnabled = false,      // kompas bawaan Google dimatikan
-                zoomControlsEnabled = false, // tombol +/- bawaan dimatikan
+                compassEnabled = false,
+                zoomControlsEnabled = false,
                 myLocationButtonEnabled = false,
                 mapToolbarEnabled = false
             )
@@ -235,7 +239,6 @@ fun MapsScreen(
         }
 
         // Pin overlay: selalu di tengah layar.
-        // Offset -24dp (setengah tinggi ikon 48dp) agar ujung pin tepat di titik tengah.
         Icon(
             imageVector = Icons.Filled.LocationOn,
             contentDescription = null,
@@ -247,6 +250,7 @@ fun MapsScreen(
         )
 
         // ===== Tombol play/stop GRB & GJK: kiri bawah, tersusun vertikal =====
+        // onClick mengirim posisi kamera LIVE → marker presisi di titik tengah layar.
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
@@ -257,13 +261,13 @@ fun MapsScreen(
                 label = "GRB",
                 isActive = uiState.grbMarker != null,
                 accent = GrbGreen,
-                onClick = viewModel::toggleGrb
+                onClick = { viewModel.toggleGrb(currentMapCenter()) }
             )
             TrackButton(
                 label = "GJK",
                 isActive = uiState.gjkMarker != null,
                 accent = GjkRed,
-                onClick = viewModel::toggleGjk
+                onClick = { viewModel.toggleGjk(currentMapCenter()) }
             )
         }
 
