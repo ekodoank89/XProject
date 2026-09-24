@@ -299,24 +299,28 @@ fun MapsScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Chip koordinat marker GRB — tap: pin ke koordinat marker
-            uiState.grbMarker?.let { grb ->
-                CoordinateChip(
-                    label = "GRB",
-                    coordinate = grb,
-                    accent = GrbGreen,
-                    onClick = { viewModel.onMoveToRequested(grb) }
-                )
+            // Chip koordinat marker GRB — bisa disembunyikan dari menu OPT
+            if (uiState.isGrbChipVisible) {
+                uiState.grbMarker?.let { grb ->
+                    CoordinateChip(
+                        label = "GRB",
+                        coordinate = grb,
+                        accent = GrbGreen,
+                        onClick = { viewModel.onMoveToRequested(grb) }
+                    )
+                }
             }
 
-            // Chip koordinat marker GJK — tap: pin ke koordinat marker
-            uiState.gjkMarker?.let { gjk ->
-                CoordinateChip(
-                    label = "GJK",
-                    coordinate = gjk,
-                    accent = GjkRed,
-                    onClick = { viewModel.onMoveToRequested(gjk) }
-                )
+            // Chip koordinat marker GJK — bisa disembunyikan dari menu OPT
+            if (uiState.isGjkChipVisible) {
+                uiState.gjkMarker?.let { gjk ->
+                    CoordinateChip(
+                        label = "GJK",
+                        coordinate = gjk,
+                        accent = GjkRed,
+                        onClick = { viewModel.onMoveToRequested(gjk) }
+                    )
+                }
             }
 
             // Chip koordinat pin (mengikuti switch di menu OPT)
