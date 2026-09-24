@@ -1,34 +1,52 @@
 package com.aya.xproject.data.repository
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.MutablePreferences
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import com.aya.xproject.data.local.PrefsKeys
 import com.aya.xproject.domain.model.MapSettings
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Sumber kebenaran preferensi peta, dipakai bersama oleh
- * beberapa screen (Maps, Option, dst).
- * Sementara in-memory; nanti bisa dimigrasi ke DataStore
- * tanpa mengubah ViewModel maupun UI.
+ * Sumber kebenaran preferensi peta — PERSISTEN via DataStore.
+ * Setelan tetap ada meski app ditutup atau paksa berhenti.
  */
 @Singleton
-class MapSettingsRepository @Inject constructor() {
+class MapSettingsRepository @Inject constructor(
+    private val dataStore: DataStore<Preferences>
+) {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    private val _settings = MutableStateFlow(MapSettings())
-    val settings: StateFlow<MapSettings> = _settings.asStateFlow()
+    val settings: StateFlow<MapSettings> = dataStore.data
+        .map { prefs ->
+            MapSettings(
+                isCoordinateChipVisible = prefs[PrefsKeys.CHIP_COORDINATE] ?: true,
+                isGrbChipVisible = prefs[PrefsKeys.CHIP_GRB] ?: true,
+                isGjkChipVisible = prefs[PrefsKeys.CHIP_GJK] ?: true
+            )
+        }
+        .stateIn(scope, SharingStarted.Eagerly, MapSettings())
 
-    fun setCoordinateChipVisible(visible: Boolean) {
-        _settings.update { it.copy(isCoordinateChipVisible = visible) }
-    }
+    fun setCoordinateChipVisible(visible: Boolean) =
+        write { it[PrefsKeys.CHIP_COORDINATE] = visible }
 
-    fun setGrbChipVisible(visible: Boolean) {
-        _settings.update { it.copy(isGrbChipVisible = visible) }
-    }
+    fun setGrbChipVisible(visible: Boolean) =
+        write { it[PrefsKeys.CHIP_GRB] = visible }
 
-    fun setGjkChipVisible(visible: Boolean) {
-        _settings.update { it.copy(isGjkChipVisible = visible) }
+    fun setGjkChipVisible(visible: Boolean) =
+        write { it[PrefsKeys.CHIP_GJK] = visible }
+
+    private fun write(block: (MutablePreferences) -> Unit) {
+        scope.launch { dataStore.edit(block) }
     }
 }
