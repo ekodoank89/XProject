@@ -37,6 +37,8 @@ class MapsViewModel @Inject constructor(
             isCoordinateChipVisible = settings.isCoordinateChipVisible,
             isGrbChipVisible = settings.isGrbChipVisible,
             isGjkChipVisible = settings.isGjkChipVisible,
+            isGrbJitterChipVisible = settings.isGrbJitterChipVisible,
+            isGjkJitterChipVisible = settings.isGjkJitterChipVisible,
             pendingCameraTarget = pendingTarget,
             grbMarker = grb,
             gjkMarker = gjk
