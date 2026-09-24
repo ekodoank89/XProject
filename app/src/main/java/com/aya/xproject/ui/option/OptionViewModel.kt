@@ -36,6 +36,14 @@ class OptionViewModel @Inject constructor(
         mapSettingsRepository.setGjkChipVisible(visible)
     }
 
+    fun onGrbJitterChipVisibilityChanged(visible: Boolean) {
+        mapSettingsRepository.setGrbJitterChipVisible(visible)
+    }
+
+    fun onGjkJitterChipVisibilityChanged(visible: Boolean) {
+        mapSettingsRepository.setGjkJitterChipVisible(visible)
+    }
+
     fun exportFavorites(uri: Uri) {
         viewModelScope.launch {
             favoriteBackupManager.export(uri)
