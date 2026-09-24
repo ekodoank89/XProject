@@ -26,13 +26,32 @@ class FavoriteViewModel @Inject constructor(
     val favorites: StateFlow<List<Favorite>> = favoriteRepository.favorites
     val pinCenter: StateFlow<MapCenter> = mapCenterRepository.center
 
-    // Ganti tab: form di-reset agar tidak ada edit yang menggantung lintas tab
     fun selectTab(tab: FavoriteTab) {
-        _uiState.update { it.copy(selectedTab = tab, form = FavoriteFormState()) }
+        _uiState.update {
+            it.copy(selectedTab = tab, form = FavoriteFormState(), isFormExpanded = false)
+        }
     }
 
-    fun selectFormMode(isFromPin: Boolean) {
-        _uiState.update { it.copy(form = it.form.copy(isFromPin = isFromPin)) }
+    /** Tap sub menu DARI PIN: buka isian pin, atau tutup jika sedang terbuka. */
+    fun onFromPinSectionClicked() {
+        _uiState.update {
+            val willExpand = !(it.isFormExpanded && it.form.isFromPin)
+            it.copy(
+                isFormExpanded = willExpand,
+                form = if (willExpand) it.form.copy(isFromPin = true) else it.form
+            )
+        }
+    }
+
+    /** Tap sub menu MANUAL: buka isian manual, atau tutup jika sedang terbuka. */
+    fun onManualSectionClicked() {
+        _uiState.update {
+            val willExpand = !(it.isFormExpanded && !it.form.isFromPin)
+            it.copy(
+                isFormExpanded = willExpand,
+                form = if (willExpand) it.form.copy(isFromPin = false) else it.form
+            )
+        }
     }
 
     fun onNameChanged(value: String) {
@@ -50,6 +69,7 @@ class FavoriteViewModel @Inject constructor(
     fun startEdit(favorite: Favorite) {
         _uiState.update {
             it.copy(
+                isFormExpanded = true, // saat edit, isian langsung tampil
                 form = FavoriteFormState(
                     isFromPin = false, // saat edit, koordinat diubah lewat input manual
                     editingId = favorite.id,
@@ -62,7 +82,7 @@ class FavoriteViewModel @Inject constructor(
     }
 
     fun cancelEdit() {
-        _uiState.update { it.copy(form = FavoriteFormState()) }
+        _uiState.update { it.copy(form = FavoriteFormState(), isFormExpanded = false) }
     }
 
     fun save() {
