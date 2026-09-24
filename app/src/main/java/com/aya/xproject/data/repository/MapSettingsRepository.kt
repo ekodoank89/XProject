@@ -34,7 +34,11 @@ class MapSettingsRepository @Inject constructor(
                 isGrbChipVisible = prefs[PrefsKeys.CHIP_GRB] ?: true,
                 isGjkChipVisible = prefs[PrefsKeys.CHIP_GJK] ?: true,
                 isGrbJitterChipVisible = prefs[PrefsKeys.CHIP_GRB_JITTER] ?: true,
-                isGjkJitterChipVisible = prefs[PrefsKeys.CHIP_GJK_JITTER] ?: true
+                isGjkJitterChipVisible = prefs[PrefsKeys.CHIP_GJK_JITTER] ?: true,
+                isGrbJitterDotVisible = prefs[PrefsKeys.GRB_JITTER_DOT] ?: true,
+                isGrbRadiusCircleVisible = prefs[PrefsKeys.GRB_RADIUS_CIRCLE] ?: true,
+                isGjkJitterDotVisible = prefs[PrefsKeys.GJK_JITTER_DOT] ?: true,
+                isGjkRadiusCircleVisible = prefs[PrefsKeys.GJK_RADIUS_CIRCLE] ?: true
             )
         }
         .stateIn(scope, SharingStarted.Eagerly, MapSettings())
@@ -53,6 +57,18 @@ class MapSettingsRepository @Inject constructor(
 
     fun setGjkJitterChipVisible(visible: Boolean) =
         write { it[PrefsKeys.CHIP_GJK_JITTER] = visible }
+
+    fun setGrbJitterDotVisible(visible: Boolean) =
+        write { it[PrefsKeys.GRB_JITTER_DOT] = visible }
+
+    fun setGrbRadiusCircleVisible(visible: Boolean) =
+        write { it[PrefsKeys.GRB_RADIUS_CIRCLE] = visible }
+
+    fun setGjkJitterDotVisible(visible: Boolean) =
+        write { it[PrefsKeys.GJK_JITTER_DOT] = visible }
+
+    fun setGjkRadiusCircleVisible(visible: Boolean) =
+        write { it[PrefsKeys.GJK_RADIUS_CIRCLE] = visible }
 
     private fun write(block: (MutablePreferences) -> Unit) {
         scope.launch { dataStore.edit(block) }
