@@ -30,6 +30,8 @@ class MapsViewModel @Inject constructor(
         MapsUiState(
             center = center,
             isCoordinateChipVisible = settings.isCoordinateChipVisible,
+            isGrbChipVisible = settings.isGrbChipVisible,
+            isGjkChipVisible = settings.isGjkChipVisible,
             pendingCameraTarget = pendingTarget,
             grbMarker = grb,
             gjkMarker = gjk
