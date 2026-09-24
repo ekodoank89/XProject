@@ -70,6 +70,7 @@ class MapsViewModel @Inject constructor(
      * Konsumsi permintaan kamera. Jika permintaannya membawa kategori auto-play
      * (dari tap list favorite), marker kategori itu dipasang di koordinat target
      * → jitter kategori tersebut otomatis aktif dengan pusat di markernya.
+     * Jika kategori sedang play, ini menjadi RE-CENTER (re-play) sesuai desain.
      */
     fun onCameraTargetConsumed() {
         val request = mapCenterRepository.consumePendingTarget()
