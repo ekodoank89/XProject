@@ -3,6 +3,7 @@ package com.aya.xproject.ui.maps
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aya.xproject.data.jitter.JitterEngine
+import com.aya.xproject.data.repository.JitterRepository
 import com.aya.xproject.data.repository.MapCenterRepository
 import com.aya.xproject.data.repository.MapSettingsRepository
 import com.aya.xproject.data.repository.MarkerRepository
@@ -20,7 +21,8 @@ class MapsViewModel @Inject constructor(
     private val mapCenterRepository: MapCenterRepository,
     mapSettingsRepository: MapSettingsRepository,
     private val markerRepository: MarkerRepository,
-    jitterEngine: JitterEngine
+    jitterEngine: JitterEngine,
+    jitterRepository: JitterRepository
 ) : ViewModel() {
 
     // State dasar: peta, preferensi, marker
@@ -46,15 +48,24 @@ class MapsViewModel @Inject constructor(
         )
     }
 
-    // Gabungkan dengan posisi jitter yang bergerak live
+    // Gabungkan dengan posisi jitter (bergerak live) + radius dari slider JIT (live)
     val uiState: StateFlow<MapsUiState> = combine(
         baseState,
         jitterEngine.grbPosition,
-        jitterEngine.gjkPosition
-    ) { state, grbJitter, gjkJitter ->
+        jitterEngine.gjkPosition,
+        jitterRepository.settings
+    ) { state, grbJitter, gjkJitter, jitterSettings ->
         state.copy(
             grbJitterPosition = grbJitter,
-            gjkJitterPosition = gjkJitter
+            gjkJitterPosition = gjkJitter,
+            // Lingkaran radius hanya tampil saat jitter aktif (marker ada),
+            // nilainya live mengikuti slider "Radius maksimal" di menu JIT
+            grbJitterRadius = state.grbMarker?.let {
+                jitterSettings[JitterTab.GRB]?.maxRadiusMeters
+            },
+            gjkJitterRadius = state.gjkMarker?.let {
+                jitterSettings[JitterTab.GJK]?.maxRadiusMeters
+            }
         )
     }.stateIn(
         scope = viewModelScope,
