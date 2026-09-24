@@ -4,6 +4,7 @@ import com.aya.xproject.domain.model.FavoriteTab
 
 data class FavoriteUiState(
     val selectedTab: FavoriteTab = FavoriteTab.GRB,
+    val isFormExpanded: Boolean = false, // default: isi sub menu disembunyikan
     val form: FavoriteFormState = FavoriteFormState()
 )
 
