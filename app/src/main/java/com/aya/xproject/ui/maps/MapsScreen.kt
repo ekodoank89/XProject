@@ -212,32 +212,28 @@ fun MapsScreen(
             // ⚠️ Semua overlay (Circle/Marker) WAJIB di dalam content lambda GoogleMap.
 
             // ===== Lingkaran radius jitter GRB (live dari slider JIT) =====
-            if (uiState.isGrbJitterRadiusReady) {
-                uiState.grbMarker?.let { grb ->
-                    uiState.grbJitterRadius?.let { radius ->
-                        Circle(
-                            center = LatLng(grb.latitude, grb.longitude),
-                            radius = radius.toDouble(),
-                            strokeColor = GrbGreen,
-                            strokeWidth = 3f,
-                            fillColor = GrbGreen.copy(alpha = 0.15f)
-                        )
-                    }
+            uiState.grbMarker?.let { grb ->
+                uiState.grbJitterRadius?.let { radius ->
+                    Circle(
+                        center = LatLng(grb.latitude, grb.longitude),
+                        radius = radius.toDouble(),
+                        strokeColor = GrbGreen,
+                        strokeWidth = 3f,
+                        fillColor = GrbGreen.copy(alpha = 0.15f)
+                    )
                 }
             }
 
             // ===== Lingkaran radius jitter GJK (live dari slider JIT) =====
-            if (uiState.isGjkJitterRadiusReady) {
-                uiState.gjkMarker?.let { gjk ->
-                    uiState.gjkJitterRadius?.let { radius ->
-                        Circle(
-                            center = LatLng(gjk.latitude, gjk.longitude),
-                            radius = radius.toDouble(),
-                            strokeColor = GjkRed,
-                            strokeWidth = 3f,
-                            fillColor = GjkRed.copy(alpha = 0.15f)
-                        )
-                    }
+            uiState.gjkMarker?.let { gjk ->
+                uiState.gjkJitterRadius?.let { radius ->
+                    Circle(
+                        center = LatLng(gjk.latitude, gjk.longitude),
+                        radius = radius.toDouble(),
+                        strokeColor = GjkRed,
+                        strokeWidth = 3f,
+                        fillColor = GjkRed.copy(alpha = 0.15f)
+                    )
                 }
             }
 
