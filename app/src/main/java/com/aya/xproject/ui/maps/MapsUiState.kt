@@ -7,6 +7,8 @@ data class MapsUiState(
     val center: MapCenter = MapCenter(-6.2088, 106.8456),
     val zoom: Float = 15f,
     val isCoordinateChipVisible: Boolean = true,
+    val isGrbChipVisible: Boolean = true,
+    val isGjkChipVisible: Boolean = true,
     val pendingCameraTarget: MapCenter? = null,
     val grbMarker: MapCenter? = null,
     val gjkMarker: MapCenter? = null
