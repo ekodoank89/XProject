@@ -41,6 +41,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -53,8 +54,6 @@ import kotlinx.coroutines.delay
 
 private const val SPLASH_MIN_DURATION_MS = 2000L
 
-// Warna splash ditetapkan tetap agar konsisten di tema terang/gelap
-private val SplashBackground = Color(0xFF1565C0)
 private val SplashOnBackground = Color.White
 
 @Composable
@@ -180,15 +179,28 @@ fun SplashScreen(
         else -> null
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(SplashBackground),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Box(modifier = modifier.fillMaxSize()) {
 
-            // ===== Logo dari gambar Anda (app/src/main/res/drawable/splash_logo) =====
+        // ===== Latar dari gambar Anda (drawable/splash_bg) =====
+        Image(
+            painter = painterResource(id = R.drawable.splash_bg),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.matchParentSize()
+        )
+        // Lapisan gelap tipis agar teks putih tetap terbaca
+        Box(
+            Modifier
+                .matchParentSize()
+                .background(Color.Black.copy(alpha = 0.45f))
+        )
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.align(Alignment.Center)
+        ) {
+
+            // ===== Logo dari gambar Anda (drawable/splash_logo) =====
             Surface(
                 shape = CircleShape,
                 color = Color.White,
@@ -210,11 +222,6 @@ fun SplashScreen(
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = SplashOnBackground
-            )
-            Text(
-                text = "Simpan & tuju lokasi favorit Anda",
-                style = MaterialTheme.typography.bodyMedium,
-                color = SplashOnBackground.copy(alpha = 0.85f)
             )
 
             Spacer(Modifier.size(24.dp))
@@ -292,7 +299,6 @@ fun SplashScreen(
 
                         PermissionRow(
                             icon = {
-                                // Emoji agar tidak perlu library ikon extended (hemat ukuran APK)
                                 Text(text = "🔋", fontSize = 16.sp)
                             },
                             title = "Baterai tanpa pembatasan",
