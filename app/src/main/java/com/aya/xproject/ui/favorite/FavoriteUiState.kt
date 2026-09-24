@@ -4,7 +4,7 @@ import com.aya.xproject.domain.model.FavoriteTab
 
 data class FavoriteUiState(
     val selectedTab: FavoriteTab = FavoriteTab.GRB,
-    val isFormExpanded: Boolean = false, // default: isi sub menu disembunyikan
+    val isFormExpanded: Boolean = false,
     val form: FavoriteFormState = FavoriteFormState()
 )
 
@@ -20,3 +20,9 @@ data class FavoriteFormState(
 ) {
     val isEditing: Boolean get() = editingId != null
 }
+
+/** Bagian UI sementara (accordion + form) — tidak dipersistenkan. */
+data class FavoriteFormUi(
+    val isFormExpanded: Boolean = false,
+    val form: FavoriteFormState = FavoriteFormState()
+)
