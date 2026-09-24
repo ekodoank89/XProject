@@ -17,5 +17,8 @@ data class MapsUiState(
     val gjkMarker: MapCenter? = null,
     // Posisi jitter yang bergerak (null = jitter tidak aktif)
     val grbJitterPosition: MapCenter? = null,
-    val gjkJitterPosition: MapCenter? = null
+    val gjkJitterPosition: MapCenter? = null,
+    // Radius lingkaran jitter dari slider JIT (non-null saat jitter aktif)
+    val grbJitterRadius: Float? = null,
+    val gjkJitterRadius: Float? = null
 )
