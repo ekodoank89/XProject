@@ -41,7 +41,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -54,6 +53,8 @@ import kotlinx.coroutines.delay
 
 private const val SPLASH_MIN_DURATION_MS = 2000L
 
+// Latar splash warna tetap agar konsisten di tema terang/gelap
+private val SplashBackground = Color(0xFF1565C0)
 private val SplashOnBackground = Color.White
 
 @Composable
@@ -179,26 +180,13 @@ fun SplashScreen(
         else -> null
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
-
-        // ===== Latar dari gambar Anda (drawable/splash_bg) =====
-        Image(
-            painter = painterResource(id = R.drawable.splash_bg),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.matchParentSize()
-        )
-        // Lapisan gelap tipis agar teks putih tetap terbaca
-        Box(
-            Modifier
-                .matchParentSize()
-                .background(Color.Black.copy(alpha = 0.45f))
-        )
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.align(Alignment.Center)
-        ) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(SplashBackground),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
             // ===== Logo dari gambar Anda (drawable/splash_logo) =====
             Surface(
