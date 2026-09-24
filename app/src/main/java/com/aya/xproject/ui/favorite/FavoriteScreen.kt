@@ -1,5 +1,6 @@
 package com.aya.xproject.ui.favorite
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -55,8 +57,14 @@ fun FavoriteScreen(
 
     val form = uiState.form
     val tabFavorites = allFavorites.filter { it.tab == uiState.selectedTab }
+    // Saat edit, isian selalu tampil; selain itu ikut status buka/tutup sub menu
+    val showFormContent = form.isEditing || uiState.isFormExpanded
 
-    Column(modifier = modifier.fillMaxSize()) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .statusBarsPadding() // turun agar tidak tertutup status bar
+    ) {
 
         // ===== Tab menu utama: GRB / GJK =====
         TabRow(selectedTabIndex = uiState.selectedTab.ordinal) {
@@ -77,17 +85,17 @@ fun FavoriteScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
-            // ===== Sub menu DARI PIN / MANUAL (sembunyi saat edit) =====
+            // ===== Sub menu DARI PIN / MANUAL (tap untuk buka/tutup) =====
             if (!form.isEditing) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(
-                        selected = form.isFromPin,
-                        onClick = { viewModel.selectFormMode(true) },
+                        selected = showFormContent && form.isFromPin,
+                        onClick = viewModel::onFromPinSectionClicked,
                         label = { Text("DARI PIN") }
                     )
                     FilterChip(
-                        selected = !form.isFromPin,
-                        onClick = { viewModel.selectFormMode(false) },
+                        selected = showFormContent && !form.isFromPin,
+                        onClick = viewModel::onManualSectionClicked,
                         label = { Text("MANUAL") }
                     )
                 }
@@ -99,54 +107,58 @@ fun FavoriteScreen(
                 )
             }
 
-            // ===== Form =====
-            OutlinedTextField(
-                value = form.name,
-                onValueChange = viewModel::onNameChanged,
-                label = { Text("Nama Favorite") },
-                isError = form.nameError != null,
-                supportingText = form.nameError?.let { error -> { Text(error) } },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
+            // ===== Isi sub menu: default tersembunyi, muncul saat sub menu di-tap =====
+            AnimatedVisibility(visible = showFormContent) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = form.name,
+                        onValueChange = viewModel::onNameChanged,
+                        label = { Text("Nama Favorite") },
+                        isError = form.nameError != null,
+                        supportingText = form.nameError?.let { error -> { Text(error) } },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-            if (form.isFromPin && !form.isEditing) {
-                Text(
-                    text = "Koordinat dari pin: " + String.format(
-                        Locale.US, "%.6f, %.6f", pinCenter.latitude, pinCenter.longitude
-                    ),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            } else {
-                OutlinedTextField(
-                    value = form.latitude,
-                    onValueChange = viewModel::onLatitudeChanged,
-                    label = { Text("Latitude") },
-                    isError = form.latitudeError != null,
-                    supportingText = form.latitudeError?.let { error -> { Text(error) } },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = form.longitude,
-                    onValueChange = viewModel::onLongitudeChanged,
-                    label = { Text("Longitude") },
-                    isError = form.longitudeError != null,
-                    supportingText = form.longitudeError?.let { error -> { Text(error) } },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+                    if (form.isFromPin && !form.isEditing) {
+                        Text(
+                            text = "Koordinat dari pin: " + String.format(
+                                Locale.US, "%.6f, %.6f", pinCenter.latitude, pinCenter.longitude
+                            ),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        OutlinedTextField(
+                            value = form.latitude,
+                            onValueChange = viewModel::onLatitudeChanged,
+                            label = { Text("Latitude") },
+                            isError = form.latitudeError != null,
+                            supportingText = form.latitudeError?.let { error -> { Text(error) } },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            value = form.longitude,
+                            onValueChange = viewModel::onLongitudeChanged,
+                            label = { Text("Longitude") },
+                            isError = form.longitudeError != null,
+                            supportingText = form.longitudeError?.let { error -> { Text(error) } },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (form.isEditing) {
-                    TextButton(onClick = viewModel::cancelEdit) { Text("Batal") }
-                }
-                Button(onClick = viewModel::save) {
-                    Text(if (form.isEditing) "Perbarui" else "Simpan")
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (form.isEditing) {
+                            TextButton(onClick = viewModel::cancelEdit) { Text("Batal") }
+                        }
+                        Button(onClick = viewModel::save) {
+                            Text(if (form.isEditing) "Perbarui" else "Simpan")
+                        }
+                    }
                 }
             }
 
