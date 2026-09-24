@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.aya.xproject.ui.common.ComingSoonScreen
 import com.aya.xproject.ui.favorite.FavoriteScreen
+import com.aya.xproject.ui.jitter.JitterScreen
 import com.aya.xproject.ui.maps.MapsScreen
 import com.aya.xproject.ui.option.OptionScreen
 
@@ -22,7 +23,9 @@ fun XProjectNavHost(
         navController = navController,
         startDestination = BottomNavItem.Home.route,
         modifier = modifier,
-        // Tanpa animasi transisi antar tab — perpindahan instan
+        // Transisi instan antar tab (dari iterasi sebelumnya).
+        // Jika Anda tidak memasang versi opsional itu dan ingin fade kembali,
+        // hapus 4 baris parameter transition di bawah ini.
         enterTransition = { EnterTransition.None },
         exitTransition = { ExitTransition.None },
         popEnterTransition = { EnterTransition.None },
@@ -43,7 +46,7 @@ fun XProjectNavHost(
             )
         }
         composable(BottomNavItem.Jitter.route) {
-            ComingSoonScreen(title = "JIT")
+            JitterScreen()
         }
         composable(BottomNavItem.Option.route) {
             OptionScreen()
