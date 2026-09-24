@@ -71,6 +71,20 @@ fun OptionScreen(
             onCheckedChange = { viewModel.onCoordinateChipVisibilityChanged(it) }
         )
 
+        OptionSwitchItem(
+            title = "Chip koordinat GRB",
+            subtitle = "Tampilkan/sembunyikan chip koordinat marker GRB (hijau)",
+            checked = settings.isGrbChipVisible,
+            onCheckedChange = { viewModel.onGrbChipVisibilityChanged(it) }
+        )
+
+        OptionSwitchItem(
+            title = "Chip koordinat GJK",
+            subtitle = "Tampilkan/sembunyikan chip koordinat marker GJK (merah)",
+            checked = settings.isGjkChipVisible,
+            onCheckedChange = { viewModel.onGjkChipVisibilityChanged(it) }
+        )
+
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
         Text(
