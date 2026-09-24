@@ -44,6 +44,22 @@ class OptionViewModel @Inject constructor(
         mapSettingsRepository.setGjkJitterChipVisible(visible)
     }
 
+    fun onGrbJitterDotVisibilityChanged(visible: Boolean) {
+        mapSettingsRepository.setGrbJitterDotVisible(visible)
+    }
+
+    fun onGrbRadiusCircleVisibilityChanged(visible: Boolean) {
+        mapSettingsRepository.setGrbRadiusCircleVisible(visible)
+    }
+
+    fun onGjkJitterDotVisibilityChanged(visible: Boolean) {
+        mapSettingsRepository.setGjkJitterDotVisible(visible)
+    }
+
+    fun onGjkRadiusCircleVisibilityChanged(visible: Boolean) {
+        mapSettingsRepository.setGjkRadiusCircleVisible(visible)
+    }
+
     fun exportFavorites(uri: Uri) {
         viewModelScope.launch {
             favoriteBackupManager.export(uri)
