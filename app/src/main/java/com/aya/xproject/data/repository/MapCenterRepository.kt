@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import com.aya.xproject.data.local.PrefsKeys
+import com.aya.xproject.domain.model.JitterTab
 import com.aya.xproject.domain.model.MapCenter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,6 +18,16 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
+
+/**
+ * Permintaan perpindahan kamera.
+ * [playTab] non-null = setelah kamera sampai di [target], kategori tersebut
+ * di-play otomatis (marker dipasang di target → jitter ikut aktif).
+ */
+data class CameraRequest(
+    val target: MapCenter,
+    val playTab: JitterTab? = null
+)
 
 /** Posisi peta + status pemuatan (dipakai untuk restore kamera saat app dibuka). */
 data class CenterSnapshot(
@@ -40,8 +51,8 @@ class MapCenterRepository @Inject constructor(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    private val _pendingCameraTarget = MutableStateFlow<MapCenter?>(null)
-    val pendingCameraTarget: StateFlow<MapCenter?> = _pendingCameraTarget.asStateFlow()
+    private val _pendingCameraTarget = MutableStateFlow<CameraRequest?>(null)
+    val pendingCameraTarget: StateFlow<CameraRequest?> = _pendingCameraTarget.asStateFlow()
 
     val snapshot: StateFlow<CenterSnapshot> = dataStore.data
         .map { prefs ->
@@ -70,11 +81,14 @@ class MapCenterRepository @Inject constructor(
         }
     }
 
-    fun requestMoveTo(target: MapCenter) {
-        _pendingCameraTarget.value = target
+    fun requestMoveTo(target: MapCenter, playTab: JitterTab? = null) {
+        _pendingCameraTarget.value = CameraRequest(target, playTab)
     }
 
-    fun consumePendingTarget() {
+    /** Ambil permintaan sekaligus kosongkan; mengembalikan permintaan yang dikonsumsi. */
+    fun consumePendingTarget(): CameraRequest? {
+        val current = _pendingCameraTarget.value
         _pendingCameraTarget.value = null
+        return current
     }
 }
