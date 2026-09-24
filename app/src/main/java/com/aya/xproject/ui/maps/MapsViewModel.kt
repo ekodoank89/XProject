@@ -6,6 +6,7 @@ import com.aya.xproject.data.jitter.JitterEngine
 import com.aya.xproject.data.repository.MapCenterRepository
 import com.aya.xproject.data.repository.MapSettingsRepository
 import com.aya.xproject.data.repository.MarkerRepository
+import com.aya.xproject.domain.model.JitterTab
 import com.aya.xproject.domain.model.MapCenter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -65,8 +66,18 @@ class MapsViewModel @Inject constructor(
         mapCenterRepository.updateCenter(center, zoom)
     }
 
+    /**
+     * Konsumsi permintaan kamera. Jika permintaannya membawa kategori auto-play
+     * (dari tap list favorite), marker kategori itu dipasang di koordinat target
+     * → jitter kategori tersebut otomatis aktif dengan pusat di markernya.
+     */
     fun onCameraTargetConsumed() {
-        mapCenterRepository.consumePendingTarget()
+        val request = mapCenterRepository.consumePendingTarget()
+        when (request?.playTab) {
+            JitterTab.GRB -> markerRepository.setGrb(request.target)
+            JitterTab.GJK -> markerRepository.setGjk(request.target)
+            null -> Unit // perpindahan biasa (chip/dll) — tanpa play
+        }
     }
 
     /** Play/stop GRB: play → marker tersimpan → jitter otomatis jalan. */
