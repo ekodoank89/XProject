@@ -9,6 +9,8 @@ data class MapsUiState(
     val isCoordinateChipVisible: Boolean = true,
     val isGrbChipVisible: Boolean = true,
     val isGjkChipVisible: Boolean = true,
+    val isGrbJitterChipVisible: Boolean = true,
+    val isGjkJitterChipVisible: Boolean = true,
     val pendingCameraTarget: MapCenter? = null,
     val grbMarker: MapCenter? = null,
     val gjkMarker: MapCenter? = null,
