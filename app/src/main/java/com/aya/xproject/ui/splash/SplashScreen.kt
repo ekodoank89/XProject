@@ -9,6 +9,7 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,11 +42,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.aya.xproject.R
 import kotlinx.coroutines.delay
 
 private const val SPLASH_MIN_DURATION_MS = 2000L
@@ -121,10 +124,8 @@ fun SplashScreen(
 
             SplashStep.REQUEST_BACKGROUND_LOCATION ->
                 if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
-                    // Android 10: dialog dengan opsi "Allow all the time"
                     backgroundDialogLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
                 } else {
-                    // Android 11+: sistem melarang dialog, wajib lewat Pengaturan
                     openAppSettings()
                 }
 
@@ -187,20 +188,19 @@ fun SplashScreen(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
-            // ===== Logo =====
+            // ===== Logo dari gambar Anda (app/src/main/res/drawable/splash_logo) =====
             Surface(
                 shape = CircleShape,
                 color = Color.White,
                 modifier = Modifier.size(96.dp)
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Filled.LocationOn,
-                        contentDescription = null,
-                        tint = SplashBackground,
-                        modifier = Modifier.size(52.dp)
-                    )
-                }
+                Image(
+                    painter = painterResource(id = R.drawable.splash_logo),
+                    contentDescription = "Logo XProject",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(8.dp)
+                )
             }
 
             Spacer(Modifier.size(16.dp))
