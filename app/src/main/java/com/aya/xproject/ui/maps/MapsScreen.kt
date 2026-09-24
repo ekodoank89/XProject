@@ -88,10 +88,13 @@ fun MapsScreen(
     }
 
     // ===== Titik biru lokasi (my location) =====
+    // Flag hanya boleh true jika izin fine location benar-benar terpenuhi,
+    // kalau tidak app akan crash (SecurityException).
     var isMyLocationEnabled by remember {
         mutableStateOf(hasFineLocationPermission(context))
     }
 
+    // Saat kembali ke app, status izin dicek ulang agar titik biru mengikuti kondisi terkini.
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -125,22 +128,20 @@ fun MapsScreen(
         }
     }
 
-    // Ada permintaan pindah kamera (dari Favorite / chip GRB/GJK) → animasikan
+    // Ada permintaan pindah kamera (dari Favorite / chip GRB/GJK)
+    // → LOMPAT instan ke koordinat, TANPA animasi.
     LaunchedEffect(uiState.pendingCameraTarget) {
         val target = uiState.pendingCameraTarget ?: return@LaunchedEffect
         val zoom = cameraPositionState.position.zoom
-        cameraPositionState.animate(
-            CameraUpdateFactory.newLatLngZoom(
-                LatLng(target.latitude, target.longitude),
-                zoom
-            ),
-            700
+        // Assign posisi langsung = kamera berpindah seketika (jump),
+        // bukan animate() yang menggerakkan kamera selama beberapa ratus ms.
+        cameraPositionState.position = CameraPosition.fromLatLngZoom(
+            LatLng(target.latitude, target.longitude),
+            zoom
         )
         viewModel.onCameraTargetConsumed()
-        // PENTING: simpan posisi final secara EKSPLISIT setelah animasi selesai.
-        // Event isMoving setelah animasi programatik tidak konsisten memicu
-        // pembaruan salinan di repository — tanpa baris ini, "DARI PIN" dan
-        // indikator koordinat bisa memegang posisi lama.
+        // Simpan posisi final secara eksplisit — jump instan tidak selalu
+        // memicu event isMoving, jadi jangan bergantung padanya.
         viewModel.onMapCenterChanged(target, zoom)
     }
 
