@@ -85,6 +85,20 @@ fun OptionScreen(
             onCheckedChange = { viewModel.onGjkChipVisibilityChanged(it) }
         )
 
+        OptionSwitchItem(
+            title = "Chip koordinat Jitter GRB",
+            subtitle = "Tampilkan/sembunyikan chip koordinat jitter GRB (bergerak live)",
+            checked = settings.isGrbJitterChipVisible,
+            onCheckedChange = { viewModel.onGrbJitterChipVisibilityChanged(it) }
+        )
+
+        OptionSwitchItem(
+            title = "Chip koordinat Jitter GJK",
+            subtitle = "Tampilkan/sembunyikan chip koordinat jitter GJK (bergerak live)",
+            checked = settings.isGjkJitterChipVisible,
+            onCheckedChange = { viewModel.onGjkJitterChipVisibilityChanged(it) }
+        )
+
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
         Text(
