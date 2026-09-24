@@ -20,7 +20,7 @@ class SplashViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(initialState())
+    private val _uiState = MutableStateFlow(readInitial())
     val uiState: StateFlow<SplashUiState> = _uiState.asStateFlow()
 
     fun onMinTimeElapsed() {
@@ -29,82 +29,75 @@ class SplashViewModel @Inject constructor(
     }
 
     fun onForegroundLocationResult(granted: Boolean) {
-        _uiState.update {
-            it.copy(
-                locationStatus = if (granted) PermissionItemStatus.GRANTED
-                else PermissionItemStatus.DENIED,
-                // Android 9 ke bawah: izin lokasi = otomatis "selalu"
-                isBackgroundLocationGranted = granted && Build.VERSION.SDK_INT < 29,
-                isBackgroundLocationHandled = Build.VERSION.SDK_INT < 29
-            )
-        }
+        _uiState.update { it.copy(locationStatus = statusOf(granted)) }
         advance()
     }
 
     fun onBackgroundLocationResult(granted: Boolean) {
-        _uiState.update {
-            it.copy(
-                isBackgroundLocationGranted = granted,
-                isBackgroundLocationHandled = true
-            )
-        }
+        _uiState.update { it.copy(backgroundLocationStatus = statusOf(granted)) }
         advance()
     }
 
     fun onNotificationResult(granted: Boolean) {
-        _uiState.update {
-            it.copy(
-                notificationStatus = if (granted) PermissionItemStatus.GRANTED
-                else PermissionItemStatus.DENIED
-            )
-        }
+        _uiState.update { it.copy(notificationStatus = statusOf(granted)) }
         advance()
     }
 
     fun onBatteryResult(allowed: Boolean) {
-        _uiState.update {
-            it.copy(
-                batteryStatus = if (allowed) PermissionItemStatus.GRANTED
-                else PermissionItemStatus.DENIED
+        _uiState.update { it.copy(batteryStatus = statusOf(allowed)) }
+        advance()
+    }
+
+    /**
+     * Baca ulang status izin asli dari sistem.
+     * Dipanggil saat kembali dari halaman Pengaturan: izin yang baru
+     * diberikan akan berubah jadi GRANTED, sisanya tetap (tombol tetap tampil).
+     */
+    fun refreshPermissions() {
+        _uiState.update { st ->
+            st.copy(
+                locationStatus = if (isGranted(Manifest.permission.ACCESS_FINE_LOCATION))
+                    PermissionItemStatus.GRANTED else st.locationStatus,
+                backgroundLocationStatus = when {
+                    !requiresBackground() -> PermissionItemStatus.SKIPPED
+                    isGranted(Manifest.permission.ACCESS_BACKGROUND_LOCATION) ->
+                        PermissionItemStatus.GRANTED
+                    else -> st.backgroundLocationStatus
+                },
+                notificationStatus = when {
+                    !requiresNotification() -> PermissionItemStatus.SKIPPED
+                    isGranted(Manifest.permission.POST_NOTIFICATIONS) ->
+                        PermissionItemStatus.GRANTED
+                    else -> st.notificationStatus
+                },
+                batteryStatus = if (isBatteryExempt()) PermissionItemStatus.GRANTED
+                else st.batteryStatus
             )
         }
         advance()
     }
 
-    /** Escape hatch: lewati sisa permintaan izin, langsung masuk aplikasi. */
-    fun skipAll() {
-        _uiState.update { st ->
-            st.copy(
-                step = SplashStep.DONE,
-                locationStatus = if (st.locationStatus == PermissionItemStatus.WAITING)
-                    PermissionItemStatus.SKIPPED else st.locationStatus,
-                isBackgroundLocationHandled = true,
-                notificationStatus = if (st.notificationStatus == PermissionItemStatus.WAITING)
-                    PermissionItemStatus.SKIPPED else st.notificationStatus,
-                batteryStatus = if (st.batteryStatus == PermissionItemStatus.WAITING)
-                    PermissionItemStatus.SKIPPED else st.batteryStatus
-            )
-        }
-    }
-
-    /** Tentukan step berikutnya berdasarkan hasil yang sudah ada. */
+    /**
+     * Tentukan step berikutnya. ATURAN GERBANG:
+     * step DONE hanya tercapai jika SEMUA izin wajib berstatus GRANTED.
+     * Izin yang ditolak membuat step berhenti di izin tersebut.
+     */
     private fun advance() {
         _uiState.update { st ->
             st.copy(
                 step = when {
-                    st.locationStatus == PermissionItemStatus.WAITING ->
+                    st.locationStatus != PermissionItemStatus.GRANTED ->
                         SplashStep.REQUEST_FOREGROUND_LOCATION
 
-                    !st.isBackgroundLocationHandled &&
-                            Build.VERSION.SDK_INT >= 29 &&
-                            st.locationStatus == PermissionItemStatus.GRANTED &&
-                            !st.isBackgroundLocationGranted ->
+                    requiresBackground() &&
+                            st.backgroundLocationStatus != PermissionItemStatus.GRANTED ->
                         SplashStep.REQUEST_BACKGROUND_LOCATION
 
-                    st.notificationStatus == PermissionItemStatus.WAITING ->
+                    requiresNotification() &&
+                            st.notificationStatus != PermissionItemStatus.GRANTED ->
                         SplashStep.REQUEST_NOTIFICATION
 
-                    st.batteryStatus == PermissionItemStatus.WAITING ->
+                    st.batteryStatus != PermissionItemStatus.GRANTED ->
                         SplashStep.REQUEST_BATTERY
 
                     else -> SplashStep.DONE
@@ -113,30 +106,38 @@ class SplashViewModel @Inject constructor(
         }
     }
 
-    /** Status awal: izin yang sudah ada tidak ditanya ulang. */
-    private fun initialState(): SplashUiState {
-        val fineGranted = isGranted(Manifest.permission.ACCESS_FINE_LOCATION)
-        val backgroundGranted = Build.VERSION.SDK_INT >= 29 &&
-                isGranted(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-        val batteryExempt = (context.getSystemService(Context.POWER_SERVICE) as PowerManager)
+    private fun statusOf(granted: Boolean) =
+        if (granted) PermissionItemStatus.GRANTED else PermissionItemStatus.DENIED
+
+    private fun requiresBackground() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+
+    private fun requiresNotification() = Build.VERSION.SDK_INT >= 33
+
+    private fun isBatteryExempt() =
+        (context.getSystemService(Context.POWER_SERVICE) as PowerManager)
             .isIgnoringBatteryOptimizations(context.packageName)
 
-        return SplashUiState(
-            locationStatus = if (fineGranted) PermissionItemStatus.GRANTED
-            else PermissionItemStatus.WAITING,
-            isBackgroundLocationGranted = backgroundGranted || Build.VERSION.SDK_INT < 29,
-            isBackgroundLocationHandled = backgroundGranted || Build.VERSION.SDK_INT < 29,
-            notificationStatus = when {
-                Build.VERSION.SDK_INT < 33 -> PermissionItemStatus.SKIPPED
-                isGranted(Manifest.permission.POST_NOTIFICATIONS) -> PermissionItemStatus.GRANTED
-                else -> PermissionItemStatus.WAITING
-            },
-            batteryStatus = if (batteryExempt) PermissionItemStatus.GRANTED
-            else PermissionItemStatus.WAITING
-        )
-    }
-
-    private fun isGranted(permission: String): Boolean =
+    private fun isGranted(permission: String) =
         ContextCompat.checkSelfPermission(context, permission) ==
                 PackageManager.PERMISSION_GRANTED
+
+    /** Status awal: izin yang sudah ada dianggap GRANTED (tidak ditanya ulang). */
+    private fun readInitial() = SplashUiState(
+        locationStatus = if (isGranted(Manifest.permission.ACCESS_FINE_LOCATION))
+            PermissionItemStatus.GRANTED else PermissionItemStatus.WAITING,
+        backgroundLocationStatus = when {
+            !requiresBackground() -> PermissionItemStatus.SKIPPED
+            isGranted(Manifest.permission.ACCESS_BACKGROUND_LOCATION) ->
+                PermissionItemStatus.GRANTED
+            else -> PermissionItemStatus.WAITING
+        },
+        notificationStatus = when {
+            !requiresNotification() -> PermissionItemStatus.SKIPPED
+            isGranted(Manifest.permission.POST_NOTIFICATIONS) ->
+                PermissionItemStatus.GRANTED
+            else -> PermissionItemStatus.WAITING
+        },
+        batteryStatus = if (isBatteryExempt()) PermissionItemStatus.GRANTED
+        else PermissionItemStatus.WAITING
+    )
 }
