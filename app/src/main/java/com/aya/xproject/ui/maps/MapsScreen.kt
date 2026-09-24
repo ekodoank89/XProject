@@ -7,7 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -55,8 +54,8 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -65,6 +64,9 @@ private const val MAX_ZOOM = 21f
 
 /** Durasi animasi kamera untuk tombol kontrol (ms). */
 private const val CAMERA_ANIMATION_MS = 500
+
+/** Ukuran sisi tombol play/stop — persegi (1:1), setara lebar pill versi sebelumnya. */
+private val TrackButtonSize = 80.dp
 
 // Warna aksen GRB (hijau) dan GJK (merah)
 private val GrbGreen = Color(0xFF2E7D32)
@@ -86,13 +88,10 @@ fun MapsScreen(
     }
 
     // ===== Titik biru lokasi (my location) =====
-    // Flag hanya boleh true jika izin fine location benar-benar terpenuhi,
-    // kalau tidak app akan crash (SecurityException).
     var isMyLocationEnabled by remember {
         mutableStateOf(hasFineLocationPermission(context))
     }
 
-    // Saat kembali ke app, status izin dicek ulang agar titik biru mengikuti kondisi terkini.
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -136,8 +135,7 @@ fun MapsScreen(
 
     // ===== Aksi tombol kontrol peta =====
 
-    /** Auto focus: animasikan kamera ke lokasi GPS pengguna (titik biru)
-     *  + fungsi kompas: reset bearing ke utara dan tilt diratakan. */
+    /** Auto focus: kamera ke lokasi GPS pengguna + kompas reset ke utara. */
     @SuppressLint("MissingPermission") // izin dicek manual di baris pertama
     fun autoFocus() {
         if (!hasFineLocationPermission(context)) return
@@ -193,24 +191,35 @@ fun MapsScreen(
                 myLocationButtonEnabled = false,
                 mapToolbarEnabled = false
             )
-        )
+        ) {
+            // ⚠️ Marker WAJIB berada di dalam content lambda GoogleMap,
+            // kalau tidak app akan crash (penyebab FC sebelumnya).
 
-        // ===== Marker GRB (hijau) — tampil hanya saat play =====
-        uiState.grbMarker?.let { grb ->
-            Marker(
-                state = MarkerState(position = LatLng(grb.latitude, grb.longitude)),
-                title = "GRB",
-                icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
-            )
-        }
+            // ===== Marker GRB (hijau) — tampil hanya saat play =====
+            uiState.grbMarker?.let { grb ->
+                val grbMarkerState = rememberMarkerState(
+                    key = grb,
+                    position = LatLng(grb.latitude, grb.longitude)
+                )
+                Marker(
+                    state = grbMarkerState,
+                    title = "GRB",
+                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
+                )
+            }
 
-        // ===== Marker GJK (merah) — tampil hanya saat play =====
-        uiState.gjkMarker?.let { gjk ->
-            Marker(
-                state = MarkerState(position = LatLng(gjk.latitude, gjk.longitude)),
-                title = "GJK",
-                icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
-            )
+            // ===== Marker GJK (merah) — tampil hanya saat play =====
+            uiState.gjkMarker?.let { gjk ->
+                val gjkMarkerState = rememberMarkerState(
+                    key = gjk,
+                    position = LatLng(gjk.latitude, gjk.longitude)
+                )
+                Marker(
+                    state = gjkMarkerState,
+                    title = "GJK",
+                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
+                )
+            }
         }
 
         // Pin overlay: selalu di tengah layar.
@@ -224,12 +233,12 @@ fun MapsScreen(
                 .offset(y = (-24).dp)
         )
 
-        // ===== Tombol play/stop GRB & GJK: kiri bawah =====
-        Row(
+        // ===== Tombol play/stop GRB & GJK: kiri bawah, tersusun vertikal =====
+        Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(start = 16.dp, bottom = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             TrackButton(
                 label = "GRB",
@@ -325,7 +334,7 @@ private fun hasFineLocationPermission(context: android.content.Context): Boolean
     ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
 
-/** Tombol play/stop pelacakan GRB/GJK. */
+/** Tombol play/stop pelacakan GRB/GJK — persegi 1:1, ikon di atas, label di bawah. */
 @Composable
 private fun TrackButton(
     label: String,
@@ -336,22 +345,22 @@ private fun TrackButton(
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(16.dp),
         color = if (isActive) accent else MaterialTheme.colorScheme.surface,
         tonalElevation = 3.dp,
         shadowElevation = 6.dp,
-        modifier = modifier
+        modifier = modifier.size(TrackButtonSize)
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Icon(
                 imageVector = if (isActive) Icons.Filled.Stop else Icons.Filled.PlayArrow,
                 contentDescription = null,
                 tint = if (isActive) Color.White else accent,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(26.dp)
             )
             Text(
                 text = label,
