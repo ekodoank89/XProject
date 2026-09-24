@@ -1,6 +1,7 @@
 package com.aya.xproject.ui.favorite
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.aya.xproject.data.repository.FavoriteRepository
 import com.aya.xproject.data.repository.MapCenterRepository
 import com.aya.xproject.domain.model.Favorite
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.util.Locale
 import javax.inject.Inject
 
@@ -32,7 +34,6 @@ class FavoriteViewModel @Inject constructor(
         }
     }
 
-    /** Tap sub menu DARI PIN: buka isian pin, atau tutup jika sedang terbuka. */
     fun onFromPinSectionClicked() {
         _uiState.update {
             val willExpand = !(it.isFormExpanded && it.form.isFromPin)
@@ -43,7 +44,6 @@ class FavoriteViewModel @Inject constructor(
         }
     }
 
-    /** Tap sub menu MANUAL: buka isian manual, atau tutup jika sedang terbuka. */
     fun onManualSectionClicked() {
         _uiState.update {
             val willExpand = !(it.isFormExpanded && !it.form.isFromPin)
@@ -69,9 +69,9 @@ class FavoriteViewModel @Inject constructor(
     fun startEdit(favorite: Favorite) {
         _uiState.update {
             it.copy(
-                isFormExpanded = true, // saat edit, isian langsung tampil
+                isFormExpanded = true,
                 form = FavoriteFormState(
-                    isFromPin = false, // saat edit, koordinat diubah lewat input manual
+                    isFromPin = false,
                     editingId = favorite.id,
                     name = favorite.name,
                     latitude = formatCoordinate(favorite.latitude),
@@ -95,7 +95,6 @@ class FavoriteViewModel @Inject constructor(
         var longitudeError: String? = null
 
         if (form.isFromPin && !form.isEditing) {
-            // DARI PIN: ambil posisi pin terkini (titik tengah peta)
             latitude = pinCenter.value.latitude
             longitude = pinCenter.value.longitude
         } else {
@@ -121,25 +120,32 @@ class FavoriteViewModel @Inject constructor(
         }
 
         val editingId = form.editingId
-        val favorite = Favorite(
-            id = editingId ?: favoriteRepository.nextId(),
-            name = form.name.trim(),
-            latitude = latitude ?: return,
-            longitude = longitude ?: return,
-            tab = editingId
-                ?.let { id -> favoriteRepository.favorites.value.firstOrNull { it.id == id }?.tab }
-                ?: _uiState.value.selectedTab
-        )
+        val name = form.name.trim()
+        val lat = latitude ?: return
+        val lon = longitude ?: return
 
-        if (editingId != null) favoriteRepository.update(favorite) else favoriteRepository.add(favorite)
-        cancelEdit()
+        viewModelScope.launch {
+            val tab = editingId
+                ?.let { id -> favoriteRepository.getById(id)?.tab }
+                ?: _uiState.value.selectedTab
+
+            val favorite = Favorite(
+                id = editingId ?: favoriteRepository.nextId(),
+                name = name,
+                latitude = lat,
+                longitude = lon,
+                tab = tab
+            )
+
+            if (editingId != null) favoriteRepository.update(favorite) else favoriteRepository.add(favorite)
+            cancelEdit()
+        }
     }
 
     fun delete(id: Long) {
-        favoriteRepository.delete(id)
+        viewModelScope.launch { favoriteRepository.delete(id) }
     }
 
-    /** Tap nama favorite: minta peta memindahkan pin ke koordinat ini. */
     fun selectFavorite(favorite: Favorite) {
         mapCenterRepository.requestMoveTo(MapCenter(favorite.latitude, favorite.longitude))
     }
