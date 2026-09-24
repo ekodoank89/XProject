@@ -12,6 +12,8 @@ object PrefsKeys {
     val CHIP_COORDINATE = booleanPreferencesKey("chip_coordinate_visible")
     val CHIP_GRB = booleanPreferencesKey("chip_grb_visible")
     val CHIP_GJK = booleanPreferencesKey("chip_gjk_visible")
+    val CHIP_GRB_JITTER = booleanPreferencesKey("chip_grb_jitter_visible")
+    val CHIP_GJK_JITTER = booleanPreferencesKey("chip_gjk_jitter_visible")
 
     val CENTER_LAT = stringPreferencesKey("center_lat")
     val CENTER_LNG = stringPreferencesKey("center_lng")
