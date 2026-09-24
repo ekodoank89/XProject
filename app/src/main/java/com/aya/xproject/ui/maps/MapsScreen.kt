@@ -79,8 +79,7 @@ fun MapsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // ⏳ Tunggu posisi tersimpan dimuat dari DataStore agar kamera
-    // langsung mulai di posisi terakhir (bukan koordinat default).
+    // ⏳ Tunggu posisi tersimpan dimuat agar kamera mulai di posisi terakhir.
     if (!uiState.isCenterLoaded) {
         Box(modifier = modifier.fillMaxSize())
         return
@@ -123,7 +122,7 @@ fun MapsScreen(
         return MapCenter(target.latitude, target.longitude)
     }
 
-    // Peta berhenti bergerak → simpan posisi pin (titik tengah) ke penyimpanan permanen
+    // Peta berhenti bergerak → simpan posisi pin ke penyimpanan permanen
     LaunchedEffect(cameraPositionState.isMoving) {
         if (!cameraPositionState.isMoving) {
             viewModel.onMapCenterChanged(
@@ -133,8 +132,7 @@ fun MapsScreen(
         }
     }
 
-    // Ada permintaan pindah kamera (dari Favorite / chip GRB/GJK)
-    // → LOMPAT instan ke koordinat, TANPA animasi.
+    // Ada permintaan pindah kamera (Favorite / chip GRB/GJK/Jitter) → LOMPAT instan
     LaunchedEffect(uiState.pendingCameraTarget) {
         val target = uiState.pendingCameraTarget ?: return@LaunchedEffect
         val zoom = cameraPositionState.position.zoom
@@ -143,15 +141,12 @@ fun MapsScreen(
             zoom
         )
         viewModel.onCameraTargetConsumed()
-        // Simpan posisi final secara eksplisit — jump instan tidak selalu
-        // memicu event isMoving, jadi jangan bergantung padanya.
         viewModel.onMapCenterChanged(target, zoom)
     }
 
     // ===== Aksi tombol kontrol peta =====
 
-    /** Auto focus: kamera ke lokasi GPS pengguna + kompas reset ke utara.
-     *  Jika lokasi belum tersedia (GPS belum fix), kompas tetap direset. */
+    /** Auto focus: kamera ke lokasi GPS pengguna + kompas reset ke utara. */
     @SuppressLint("MissingPermission") // izin dicek manual di baris pertama
     fun autoFocus() {
         if (!hasFineLocationPermission(context)) return
@@ -208,10 +203,9 @@ fun MapsScreen(
                 mapToolbarEnabled = false
             )
         ) {
-            // ⚠️ Marker WAJIB berada di dalam content lambda GoogleMap,
-            // kalau tidak app akan crash (penyebab FC sebelumnya).
+            // ⚠️ Marker WAJIB berada di dalam content lambda GoogleMap.
 
-            // ===== Marker GRB: icon pin, warna hijau (sama dengan chip GRB) =====
+            // ===== Marker GRB: icon pin hijau (pusat jitter GRB) =====
             uiState.grbMarker?.let { grb ->
                 val grbMarkerState = rememberMarkerState(
                     key = "grb:${grb.latitude},${grb.longitude}",
@@ -226,7 +220,7 @@ fun MapsScreen(
                 }
             }
 
-            // ===== Marker GJK: icon pin, warna merah (sama dengan chip GJK) =====
+            // ===== Marker GJK: icon pin merah (pusat jitter GJK) =====
             uiState.gjkMarker?.let { gjk ->
                 val gjkMarkerState = rememberMarkerState(
                     key = "gjk:${gjk.latitude},${gjk.longitude}",
@@ -253,7 +247,7 @@ fun MapsScreen(
                 .offset(y = (-24).dp)
         )
 
-        // ===== Tombol play/stop GRB & GJK: kiri bawah, tersusun vertikal =====
+        // ===== Tombol play/stop GRB & GJK: kiri bawah, vertikal =====
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
@@ -306,7 +300,7 @@ fun MapsScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Chip koordinat marker GRB — bisa disembunyikan dari menu OPT
+            // Chip koordinat marker GRB
             if (uiState.isGrbChipVisible) {
                 uiState.grbMarker?.let { grb ->
                     CoordinateChip(
@@ -318,7 +312,17 @@ fun MapsScreen(
                 }
             }
 
-            // Chip koordinat marker GJK — bisa disembunyikan dari menu OPT
+            // Chip koordinat jitter GRB — pergerakan live, tampil saat jitter aktif
+            uiState.grbJitterPosition?.let { jitterPos ->
+                CoordinateChip(
+                    label = "JITTER GRB",
+                    coordinate = jitterPos,
+                    accent = GrbGreen,
+                    onClick = { viewModel.onMoveToRequested(jitterPos) }
+                )
+            }
+
+            // Chip koordinat marker GJK
             if (uiState.isGjkChipVisible) {
                 uiState.gjkMarker?.let { gjk ->
                     CoordinateChip(
@@ -328,6 +332,16 @@ fun MapsScreen(
                         onClick = { viewModel.onMoveToRequested(gjk) }
                     )
                 }
+            }
+
+            // Chip koordinat jitter GJK — pergerakan live, tampil saat jitter aktif
+            uiState.gjkJitterPosition?.let { jitterPos ->
+                CoordinateChip(
+                    label = "JITTER GJK",
+                    coordinate = jitterPos,
+                    accent = GjkRed,
+                    onClick = { viewModel.onMoveToRequested(jitterPos) }
+                )
             }
 
             // Chip koordinat pin (mengikuti switch di menu OPT)
@@ -406,7 +420,7 @@ private fun TrackButton(
     }
 }
 
-/** Chip koordinat marker (warna sesuai markernya). Tap: pin menuju koordinat. */
+/** Chip koordinat (warna sesuai markernya). Tap: pin menuju koordinat. */
 @Composable
 private fun CoordinateChip(
     label: String,
