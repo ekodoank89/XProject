@@ -132,21 +132,23 @@ fun MapsScreen(
         }
     }
 
-    // Ada permintaan pindah kamera (Favorite / chip GRB/GJK/Jitter) → LOMPAT instan
+    // Ada permintaan pindah kamera (Favorite / chip) → LOMPAT instan,
+    // lalu konsumsi (jika membawa kategori auto-play, play dieksekusi di sini).
     LaunchedEffect(uiState.pendingCameraTarget) {
-        val target = uiState.pendingCameraTarget ?: return@LaunchedEffect
+        val request = uiState.pendingCameraTarget ?: return@LaunchedEffect
         val zoom = cameraPositionState.position.zoom
         cameraPositionState.position = CameraPosition.fromLatLngZoom(
-            LatLng(target.latitude, target.longitude),
+            LatLng(request.target.latitude, request.target.longitude),
             zoom
         )
+        viewModel.onMapCenterChanged(request.target, zoom)
         viewModel.onCameraTargetConsumed()
-        viewModel.onMapCenterChanged(target, zoom)
     }
 
     // ===== Aksi tombol kontrol peta =====
 
-    /** Auto focus: kamera ke lokasi GPS pengguna + kompas reset ke utara. */
+    /** Auto focus: kamera ke lokasi GPS pengguna + kompas reset ke utara.
+     *  Jika lokasi belum tersedia (GPS belum fix), kompas tetap direset. */
     @SuppressLint("MissingPermission") // izin dicek manual di baris pertama
     fun autoFocus() {
         if (!hasFineLocationPermission(context)) return
