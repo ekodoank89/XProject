@@ -7,6 +7,7 @@ import com.aya.xproject.data.repository.MapCenterRepository
 import com.aya.xproject.data.repository.SessionPreferencesRepository
 import com.aya.xproject.domain.model.Favorite
 import com.aya.xproject.domain.model.FavoriteTab
+import com.aya.xproject.domain.model.JitterTab
 import com.aya.xproject.domain.model.MapCenter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -162,9 +163,16 @@ class FavoriteViewModel @Inject constructor(
         viewModelScope.launch { favoriteRepository.delete(id) }
     }
 
-    /** Tap nama favorite: minta peta memindahkan pin ke koordinat ini. */
+    /**
+     * Tap nama favorite: pin menuju koordinat, lalu AUTO PLAY sesuai kategori
+     * favorit (tab GRB → play GRB, tab GJK → play GJK) dengan pusat jitter
+     * di koordinat favorit.
+     */
     fun selectFavorite(favorite: Favorite) {
-        mapCenterRepository.requestMoveTo(MapCenter(favorite.latitude, favorite.longitude))
+        mapCenterRepository.requestMoveTo(
+            MapCenter(favorite.latitude, favorite.longitude),
+            playTab = JitterTab.valueOf(favorite.tab.name) // enum paralel: GRB/GJK
+        )
     }
 
     private fun formatCoordinate(value: Double): String =
