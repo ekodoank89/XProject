@@ -47,13 +47,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aya.xproject.domain.model.MapCenter
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
 import kotlinx.coroutines.launch
@@ -68,7 +67,8 @@ private const val CAMERA_ANIMATION_MS = 500
 /** Ukuran sisi tombol play/stop — persegi (1:1). */
 private val TrackButtonSize = 80.dp
 
-// Warna aksen GRB (hijau) dan GJK (merah)
+// Warna aksen GRB (hijau) dan GJK (merah).
+// Dipakai BERSAMA oleh chip koordinat dan marker — warna pasti identik.
 private val GrbGreen = Color(0xFF2E7D32)
 private val GjkRed = Color(0xFFC62828)
 
@@ -203,30 +203,34 @@ fun MapsScreen(
             // ⚠️ Marker WAJIB berada di dalam content lambda GoogleMap,
             // kalau tidak app akan crash (penyebab FC sebelumnya).
 
-            // ===== Marker GRB (hijau) — tampil hanya saat play =====
+            // ===== Marker GRB: icon pin, warna hijau (sama dengan chip GRB) =====
             uiState.grbMarker?.let { grb ->
                 val grbMarkerState = rememberMarkerState(
                     key = "grb:${grb.latitude},${grb.longitude}",
                     position = LatLng(grb.latitude, grb.longitude)
                 )
-                Marker(
+                MarkerComposable(
+                    keys = arrayOf(grb.latitude, grb.longitude),
                     state = grbMarkerState,
-                    title = "GRB",
-                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
-                )
+                    title = "GRB"
+                ) {
+                    PinIcon(tint = GrbGreen)
+                }
             }
 
-            // ===== Marker GJK (merah) — tampil hanya saat play =====
+            // ===== Marker GJK: icon pin, warna merah (sama dengan chip GJK) =====
             uiState.gjkMarker?.let { gjk ->
                 val gjkMarkerState = rememberMarkerState(
                     key = "gjk:${gjk.latitude},${gjk.longitude}",
                     position = LatLng(gjk.latitude, gjk.longitude)
                 )
-                Marker(
+                MarkerComposable(
+                    keys = arrayOf(gjk.latitude, gjk.longitude),
                     state = gjkMarkerState,
-                    title = "GJK",
-                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
-                )
+                    title = "GJK"
+                ) {
+                    PinIcon(tint = GjkRed)
+                }
             }
         }
 
@@ -336,6 +340,17 @@ fun MapsScreen(
             }
         }
     }
+}
+
+/** Icon pin untuk marker — bentuk & ukuran sama dengan pin overlay tengah layar. */
+@Composable
+private fun PinIcon(tint: Color) {
+    Icon(
+        imageVector = Icons.Filled.LocationOn,
+        contentDescription = null,
+        tint = tint,
+        modifier = Modifier.size(48.dp)
+    )
 }
 
 /** Cek izin fine location secara runtime. */
