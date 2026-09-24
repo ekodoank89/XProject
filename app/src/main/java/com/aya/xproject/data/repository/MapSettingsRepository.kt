@@ -23,4 +23,12 @@ class MapSettingsRepository @Inject constructor() {
     fun setCoordinateChipVisible(visible: Boolean) {
         _settings.update { it.copy(isCoordinateChipVisible = visible) }
     }
+
+    fun setGrbChipVisible(visible: Boolean) {
+        _settings.update { it.copy(isGrbChipVisible = visible) }
+    }
+
+    fun setGjkChipVisible(visible: Boolean) {
+        _settings.update { it.copy(isGjkChipVisible = visible) }
+    }
 }
