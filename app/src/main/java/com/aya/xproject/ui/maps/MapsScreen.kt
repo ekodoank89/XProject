@@ -56,9 +56,6 @@ import java.util.Locale
 /** Zoom maksimal yang didukung Google Maps. */
 private const val MAX_ZOOM = 21f
 
-/** Zoom default aplikasi — target tombol zoom out. */
-private const val DEFAULT_ZOOM = 15f
-
 /** Durasi animasi kamera untuk tombol kontrol (ms). */
 private const val CAMERA_ANIMATION_MS = 500
 
@@ -166,11 +163,11 @@ fun MapsScreen(
         }
     }
 
-    /** Zoom out: sekali tap langsung kembali ke zoom default (bukan bertahap). */
-    fun zoomOutToDefault() {
+    /** Zoom out: perilaku bawaan Google — turun 1 level zoom per tap. */
+    fun zoomOutOneStep() {
         scope.launch {
             cameraPositionState.animate(
-                CameraUpdateFactory.zoomTo(DEFAULT_ZOOM),
+                CameraUpdateFactory.zoomOut(),
                 CAMERA_ANIMATION_MS
             )
         }
@@ -205,11 +202,11 @@ fun MapsScreen(
                 .offset(y = (-24).dp)
         )
 
-        // ===== Tombol kontrol peta buatan sendiri =====
+        // ===== Tombol kontrol peta: kanan bawah =====
         Column(
             modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(end = 16.dp),
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             MapControlButton(
@@ -224,8 +221,8 @@ fun MapsScreen(
             )
             MapControlButton(
                 icon = Icons.Filled.ZoomOut,
-                contentDescription = "Zoom ke default",
-                onClick = { zoomOutToDefault() }
+                contentDescription = "Zoom out",
+                onClick = { zoomOutOneStep() }
             )
         }
 
