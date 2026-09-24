@@ -12,6 +12,11 @@ data class MapsUiState(
     val isGjkChipVisible: Boolean = true,
     val isGrbJitterChipVisible: Boolean = true,
     val isGjkJitterChipVisible: Boolean = true,
+    // Visual peta: titik jitter & lingkaran radius
+    val isGrbJitterDotVisible: Boolean = true,
+    val isGrbRadiusCircleVisible: Boolean = true,
+    val isGjkJitterDotVisible: Boolean = true,
+    val isGjkRadiusCircleVisible: Boolean = true,
     val pendingCameraTarget: CameraRequest? = null,
     val grbMarker: MapCenter? = null,
     val gjkMarker: MapCenter? = null,
