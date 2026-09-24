@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aya.xproject.domain.model.MapCenter
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -55,7 +56,8 @@ fun MapsScreen(
     LaunchedEffect(uiState.pendingCameraTarget) {
         val target = uiState.pendingCameraTarget ?: return@LaunchedEffect
         cameraPositionState.animate(
-            CameraPosition.fromLatLngZoom(
+            // animate() butuh CameraUpdate, bukan CameraPosition
+            CameraUpdateFactory.newLatLngZoom(
                 LatLng(target.latitude, target.longitude),
                 cameraPositionState.position.zoom
             ),
