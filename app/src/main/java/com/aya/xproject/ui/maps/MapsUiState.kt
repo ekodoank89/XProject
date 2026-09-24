@@ -11,5 +11,8 @@ data class MapsUiState(
     val isGjkChipVisible: Boolean = true,
     val pendingCameraTarget: MapCenter? = null,
     val grbMarker: MapCenter? = null,
-    val gjkMarker: MapCenter? = null
+    val gjkMarker: MapCenter? = null,
+    // Posisi jitter yang bergerak (null = jitter tidak aktif)
+    val grbJitterPosition: MapCenter? = null,
+    val gjkJitterPosition: MapCenter? = null
 )
