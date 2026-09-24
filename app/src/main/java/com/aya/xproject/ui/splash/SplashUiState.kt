@@ -14,16 +14,15 @@ enum class SplashStep {
 enum class PermissionItemStatus {
     WAITING,   // belum diproses
     GRANTED,   // diizinkan
-    DENIED,    // ditolak pengguna
-    SKIPPED    // tidak diperlukan di versi Android ini
+    DENIED,    // ditolak pengguna — harus diberikan lewat tombol pemulihan
+    SKIPPED    // tidak berlaku di versi Android ini
 }
 
 data class SplashUiState(
     val isMinTimeElapsed: Boolean = false,
     val step: SplashStep = SplashStep.LOADING,
     val locationStatus: PermissionItemStatus = PermissionItemStatus.WAITING,
-    val isBackgroundLocationHandled: Boolean = false,
-    val isBackgroundLocationGranted: Boolean = false,
+    val backgroundLocationStatus: PermissionItemStatus = PermissionItemStatus.WAITING,
     val notificationStatus: PermissionItemStatus = PermissionItemStatus.WAITING,
     val batteryStatus: PermissionItemStatus = PermissionItemStatus.WAITING
 )
