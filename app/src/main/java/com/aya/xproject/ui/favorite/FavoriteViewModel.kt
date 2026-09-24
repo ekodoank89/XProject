@@ -4,13 +4,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aya.xproject.data.repository.FavoriteRepository
 import com.aya.xproject.data.repository.MapCenterRepository
+import com.aya.xproject.data.repository.SessionPreferencesRepository
 import com.aya.xproject.domain.model.Favorite
 import com.aya.xproject.domain.model.FavoriteTab
 import com.aya.xproject.domain.model.MapCenter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -19,23 +22,38 @@ import javax.inject.Inject
 @HiltViewModel
 class FavoriteViewModel @Inject constructor(
     private val favoriteRepository: FavoriteRepository,
-    private val mapCenterRepository: MapCenterRepository
+    private val mapCenterRepository: MapCenterRepository,
+    private val sessionPreferences: SessionPreferencesRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(FavoriteUiState())
-    val uiState: StateFlow<FavoriteUiState> = _uiState.asStateFlow()
+    // Bagian UI sementara (accordion + form). Tab terakhir disimpan di sessionPreferences.
+    private val _formUi = MutableStateFlow(FavoriteFormUi())
+
+    val uiState: StateFlow<FavoriteUiState> = combine(
+        sessionPreferences.favoriteTab,
+        _formUi
+    ) { tab, formUi ->
+        FavoriteUiState(
+            selectedTab = tab,
+            isFormExpanded = formUi.isFormExpanded,
+            form = formUi.form
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = FavoriteUiState()
+    )
 
     val favorites: StateFlow<List<Favorite>> = favoriteRepository.favorites
     val pinCenter: StateFlow<MapCenter> = mapCenterRepository.center
 
     fun selectTab(tab: FavoriteTab) {
-        _uiState.update {
-            it.copy(selectedTab = tab, form = FavoriteFormState(), isFormExpanded = false)
-        }
+        sessionPreferences.setFavoriteTab(tab) // tersimpan → dibuka lagi tetap di tab ini
+        _formUi.value = FavoriteFormUi()
     }
 
     fun onFromPinSectionClicked() {
-        _uiState.update {
+        _formUi.update {
             val willExpand = !(it.isFormExpanded && it.form.isFromPin)
             it.copy(
                 isFormExpanded = willExpand,
@@ -45,7 +63,7 @@ class FavoriteViewModel @Inject constructor(
     }
 
     fun onManualSectionClicked() {
-        _uiState.update {
+        _formUi.update {
             val willExpand = !(it.isFormExpanded && !it.form.isFromPin)
             it.copy(
                 isFormExpanded = willExpand,
@@ -55,38 +73,36 @@ class FavoriteViewModel @Inject constructor(
     }
 
     fun onNameChanged(value: String) {
-        _uiState.update { it.copy(form = it.form.copy(name = value, nameError = null)) }
+        _formUi.update { it.copy(form = it.form.copy(name = value, nameError = null)) }
     }
 
     fun onLatitudeChanged(value: String) {
-        _uiState.update { it.copy(form = it.form.copy(latitude = value, latitudeError = null)) }
+        _formUi.update { it.copy(form = it.form.copy(latitude = value, latitudeError = null)) }
     }
 
     fun onLongitudeChanged(value: String) {
-        _uiState.update { it.copy(form = it.form.copy(longitude = value, longitudeError = null)) }
+        _formUi.update { it.copy(form = it.form.copy(longitude = value, longitudeError = null)) }
     }
 
     fun startEdit(favorite: Favorite) {
-        _uiState.update {
-            it.copy(
-                isFormExpanded = true,
-                form = FavoriteFormState(
-                    isFromPin = false,
-                    editingId = favorite.id,
-                    name = favorite.name,
-                    latitude = formatCoordinate(favorite.latitude),
-                    longitude = formatCoordinate(favorite.longitude)
-                )
+        _formUi.value = FavoriteFormUi(
+            isFormExpanded = true,
+            form = FavoriteFormState(
+                isFromPin = false,
+                editingId = favorite.id,
+                name = favorite.name,
+                latitude = formatCoordinate(favorite.latitude),
+                longitude = formatCoordinate(favorite.longitude)
             )
-        }
+        )
     }
 
     fun cancelEdit() {
-        _uiState.update { it.copy(form = FavoriteFormState(), isFormExpanded = false) }
+        _formUi.value = FavoriteFormUi()
     }
 
     fun save() {
-        val form = _uiState.value.form
+        val form = _formUi.value.form
         val nameError = if (form.name.isBlank()) "Nama wajib diisi" else null
 
         var latitude: Double? = null
@@ -107,7 +123,7 @@ class FavoriteViewModel @Inject constructor(
         }
 
         if (nameError != null || latitudeError != null || longitudeError != null) {
-            _uiState.update {
+            _formUi.update {
                 it.copy(
                     form = it.form.copy(
                         nameError = nameError,
@@ -127,7 +143,7 @@ class FavoriteViewModel @Inject constructor(
         viewModelScope.launch {
             val tab = editingId
                 ?.let { id -> favoriteRepository.getById(id)?.tab }
-                ?: _uiState.value.selectedTab
+                ?: sessionPreferences.favoriteTab.value
 
             val favorite = Favorite(
                 id = editingId ?: favoriteRepository.nextId(),
@@ -146,6 +162,7 @@ class FavoriteViewModel @Inject constructor(
         viewModelScope.launch { favoriteRepository.delete(id) }
     }
 
+    /** Tap nama favorite: minta peta memindahkan pin ke koordinat ini. */
     fun selectFavorite(favorite: Favorite) {
         mapCenterRepository.requestMoveTo(MapCenter(favorite.latitude, favorite.longitude))
     }
