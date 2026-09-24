@@ -50,16 +50,21 @@ class MapsViewModel @Inject constructor(
         mapCenterRepository.consumePendingTarget()
     }
 
-    /** Play/stop GRB: play mengunci posisi pin saat itu, stop menghapus marker. */
-    fun toggleGrb() {
+    /**
+     * Play/stop GRB.
+     * [target] adalah posisi kamera LIVE saat tombol ditekan (dikirim dari UI),
+     * sehingga marker selalu presisi di titik tengah yang terlihat pengguna —
+     * tidak bergantung pada salinan posisi di repository.
+     */
+    fun toggleGrb(target: MapCenter) {
         val isActive = markerRepository.grbMarker.value != null
-        markerRepository.setGrb(if (isActive) null else mapCenterRepository.center.value)
+        markerRepository.setGrb(if (isActive) null else target)
     }
 
-    /** Play/stop GJK: play mengunci posisi pin saat itu, stop menghapus marker. */
-    fun toggleGjk() {
+    /** Play/stop GJK — sama seperti GRB. */
+    fun toggleGjk(target: MapCenter) {
         val isActive = markerRepository.gjkMarker.value != null
-        markerRepository.setGjk(if (isActive) null else mapCenterRepository.center.value)
+        markerRepository.setGjk(if (isActive) null else target)
     }
 
     /** Tap chip koordinat: minta kamera (pin) bergerak ke koordinat marker. */
