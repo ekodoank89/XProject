@@ -98,6 +98,24 @@ fun MapsScreen(
         LocationServices.getFusedLocationProviderClient(context)
     }
 
+    // ===== Titik jitter: SATU instance state stabil per kategori =====
+    // Pola resmi marker bergerak: state dibuat sekali, posisi didorong
+    // lewat state.position = ... (bukan membuat MarkerState baru tiap tick).
+    val grbDotState = rememberMarkerState(key = "jitter_dot_grb")
+    val gjkDotState = rememberMarkerState(key = "jitter_dot_gjk")
+
+    // Dorong posisi jitter terbaru ke state titik (native marker mengikuti otomatis)
+    LaunchedEffect(uiState.grbJitterPosition) {
+        uiState.grbJitterPosition?.let {
+            grbDotState.position = LatLng(it.latitude, it.longitude)
+        }
+    }
+    LaunchedEffect(uiState.gjkJitterPosition) {
+        uiState.gjkJitterPosition?.let {
+            gjkDotState.position = LatLng(it.latitude, it.longitude)
+        }
+    }
+
     // ===== Titik biru lokasi (my location) =====
     var isMyLocationEnabled by remember {
         mutableStateOf(hasFineLocationPermission(context))
@@ -267,14 +285,9 @@ fun MapsScreen(
                 }
             }
 
-            // ===== Titik jitter GRB: kecil, bergerak live =====
-            uiState.grbJitterPosition?.let { jitterPos ->
-                val grbDotState = rememberMarkerState(
-                    key = "grb_jitter:${jitterPos.latitude},${jitterPos.longitude}",
-                    position = LatLng(jitterPos.latitude, jitterPos.longitude)
-                )
+            // ===== Titik jitter GRB: bergerak live (state stabil + posisi didorong) =====
+            uiState.grbJitterPosition?.let {
                 MarkerComposable(
-                    keys = arrayOf(jitterPos.latitude, jitterPos.longitude),
                     state = grbDotState,
                     title = "JITTER GRB",
                     // anchor tengah: titik tepat di koordinat, bukan menggantung
@@ -284,14 +297,9 @@ fun MapsScreen(
                 }
             }
 
-            // ===== Titik jitter GJK: kecil, bergerak live =====
-            uiState.gjkJitterPosition?.let { jitterPos ->
-                val gjkDotState = rememberMarkerState(
-                    key = "gjk_jitter:${jitterPos.latitude},${jitterPos.longitude}",
-                    position = LatLng(jitterPos.latitude, jitterPos.longitude)
-                )
+            // ===== Titik jitter GJK: bergerak live (state stabil + posisi didorong) =====
+            uiState.gjkJitterPosition?.let {
                 MarkerComposable(
-                    keys = arrayOf(jitterPos.latitude, jitterPos.longitude),
                     state = gjkDotState,
                     title = "JITTER GJK",
                     anchor = Offset(0.5f, 0.5f)
