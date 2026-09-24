@@ -27,7 +27,8 @@ import javax.inject.Singleton
  *
  * - Aktif otomatis saat marker play (termasuk restore setelah app dibuka ulang).
  * - Berhenti otomatis saat marker di-stop.
- * - Pusat jitter = posisi marker; gerakan dibatasi radius maksimal.
+ * - Marker dipasang ulang di titik baru (re-center) → job lama dibatalkan,
+ *   jitter mulai segar dari pusat baru. Tanpa ini, dua job bisa jalan bersamaan.
  * - Parameter (langkah, interval, radius) dibaca ulang tiap langkah,
  *   sehingga perubahan slider di menu JIT langsung berefek.
  */
@@ -48,21 +49,24 @@ class JitterEngine @Inject constructor(
     private var gjkJob: Job? = null
 
     init {
-        // Marker muncul (play/restore) → jalankan; marker hilang (stop) → hentikan.
         scope.launch {
             markerRepository.grbMarker.collect { marker ->
-                if (marker != null) start(JitterTab.GRB, marker, _grbPosition) { grbJob = it }
-                else {
-                    grbJob?.cancel()
+                // SELALU cancel job lama dulu (fix: re-center tanpa stop
+                // sebelumnya menyisakan job lama yang tetap berjalan).
+                grbJob?.cancel()
+                if (marker != null) {
+                    start(JitterTab.GRB, marker, _grbPosition) { grbJob = it }
+                } else {
                     _grbPosition.value = null
                 }
             }
         }
         scope.launch {
             markerRepository.gjkMarker.collect { marker ->
-                if (marker != null) start(JitterTab.GJK, marker, _gjkPosition) { gjkJob = it }
-                else {
-                    gjkJob?.cancel()
+                gjkJob?.cancel()
+                if (marker != null) {
+                    start(JitterTab.GJK, marker, _gjkPosition) { gjkJob = it }
+                } else {
                     _gjkPosition.value = null
                 }
             }
