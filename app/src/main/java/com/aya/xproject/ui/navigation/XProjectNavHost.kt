@@ -13,8 +13,36 @@ import com.aya.xproject.ui.option.OptionScreen
 
 @Composable
 fun XProjectNavHost(
-    navController: navControllerPlaceholder = TODO(),
+    navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
-    // (placeholder — lihat versi lengkap di bawah)
+    NavHost(
+        navController = navController,
+        startDestination = BottomNavItem.Home.route,
+        modifier = modifier
+    ) {
+        composable(BottomNavItem.Home.route) {
+            MapsScreen()
+        }
+        composable(BottomNavItem.Favorite.route) {
+            FavoriteScreen(
+                onNavigateToHome = {
+                    navController.navigate(BottomNavItem.Home.route) {
+                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            )
+        }
+        composable(BottomNavItem.Jitter.route) {
+            ComingSoonScreen(title = "JIT")
+        }
+        composable(BottomNavItem.Option.route) {
+            OptionScreen()
+        }
+        composable(BottomNavItem.Setting.route) {
+            ComingSoonScreen(title = "SET")
+        }
+    }
 }
