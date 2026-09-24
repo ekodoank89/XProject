@@ -9,5 +9,7 @@ data class MapSettings(
     val isGrbChipVisible: Boolean = true,
     val isGjkChipVisible: Boolean = true,
     val isGrbJitterChipVisible: Boolean = true,
-    val isGjkJitterChipVisible: Boolean = true
+    val isGjkJitterChipVisible: Boolean = true,
+    val isJitterDotVisible: Boolean = true,
+    val isJitterRadiusVisible: Boolean = true
 )
