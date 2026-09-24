@@ -3,27 +3,25 @@ package com.aya.xproject.ui.jitter
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aya.xproject.data.repository.JitterRepository
+import com.aya.xproject.data.repository.SessionPreferencesRepository
 import com.aya.xproject.domain.model.JitterSettings
 import com.aya.xproject.domain.model.JitterTab
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
 class JitterViewModel @Inject constructor(
-    private val jitterRepository: JitterRepository
+    private val jitterRepository: JitterRepository,
+    private val sessionPreferences: SessionPreferencesRepository
 ) : ViewModel() {
-
-    private val selectedTab = MutableStateFlow(JitterTab.GRB)
 
     val uiState: StateFlow<JitterUiState> = combine(
         jitterRepository.settings,
-        selectedTab
+        sessionPreferences.jitterTab
     ) { settingsMap, tab ->
         JitterUiState(
             selectedTab = tab,
@@ -36,7 +34,7 @@ class JitterViewModel @Inject constructor(
     )
 
     fun selectTab(tab: JitterTab) {
-        selectedTab.value = tab
+        sessionPreferences.setJitterTab(tab) // tersimpan → dibuka lagi tetap di tab ini
     }
 
     fun onStepChanged(value: Float) = updateCurrent { it.copy(stepPerWindowMeters = value) }
@@ -49,14 +47,13 @@ class JitterViewModel @Inject constructor(
 
     /** Reset nilai tab yang sedang aktif ke default-nya. */
     fun resetToDefault() {
-        val tab = selectedTab.value
+        val tab = sessionPreferences.jitterTab.value
         jitterRepository.updateSettings(tab, JitterSettings.defaultFor(tab))
     }
 
     private fun updateCurrent(transform: (JitterSettings) -> JitterSettings) {
-        val tab = selectedTab.value
-        val current = jitterRepository.settings.value[tab]
-            ?: JitterSettings.defaultFor(tab)
+        val tab = sessionPreferences.jitterTab.value
+        val current = jitterRepository.settings.value[tab] ?: JitterSettings.defaultFor(tab)
         jitterRepository.updateSettings(tab, transform(current))
     }
 }
