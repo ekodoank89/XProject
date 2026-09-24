@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -67,7 +68,8 @@ fun SplashScreen(
         ActivityResultContracts.RequestPermission()
     ) { granted -> viewModel.onForegroundLocationResult(granted) }
 
-    val backgroundLocationLauncher = rememberLauncherForActivityResult(
+    // Dialog "Allow all the time" hanya tersedia di Android 10 (API 29)
+    val backgroundDialogLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted -> viewModel.onBackgroundLocationResult(granted) }
 
@@ -81,8 +83,31 @@ fun SplashScreen(
         viewModel.onBatteryResult(result.resultCode == Activity.RESULT_OK)
     }
 
+    // Launcher halaman Pengaturan: saat kembali, status izin dicek ulang
+    val settingsLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { viewModel.refreshPermissions() }
+
+    fun openAppSettings() {
+        settingsLauncher.launch(
+            Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", context.packageName, null)
+            )
+        )
+    }
+
+    fun requestBatteryExemption() {
+        runCatching {
+            batteryLauncher.launch(
+                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                    .setData(Uri.parse("package:${context.packageName}"))
+            )
+        }.onFailure { viewModel.onBatteryResult(false) }
+    }
+
     // ===== Mesin state splash =====
-    // 1. Pastikan splash tampil minimal beberapa saat
+    // 1. Splash tampil minimal beberapa saat
     LaunchedEffect(Unit) {
         delay(SPLASH_MIN_DURATION_MS)
         viewModel.onMinTimeElapsed()
@@ -95,26 +120,24 @@ fun SplashScreen(
                 foregroundLocationLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
 
             SplashStep.REQUEST_BACKGROUND_LOCATION ->
-                // Android 10: dialog "Allow all the time".
-                // Android 11+: sistem otomatis membuka halaman Settings lokasi.
-                backgroundLocationLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
+                    // Android 10: dialog dengan opsi "Allow all the time"
+                    backgroundDialogLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                } else {
+                    // Android 11+: sistem melarang dialog, wajib lewat Pengaturan
+                    openAppSettings()
+                }
 
             SplashStep.REQUEST_NOTIFICATION ->
                 notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
 
-            SplashStep.REQUEST_BATTERY ->
-                runCatching {
-                    batteryLauncher.launch(
-                        Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-                            .setData(Uri.parse("package:${context.packageName}"))
-                    )
-                }.onFailure { viewModel.onBatteryResult(false) }
+            SplashStep.REQUEST_BATTERY -> requestBatteryExemption()
 
             SplashStep.LOADING, SplashStep.DONE -> Unit
         }
     }
 
-    // 3. Selesai → masuk aplikasi otomatis
+    // 3. Selesai (semua izin diberikan) → masuk aplikasi otomatis
     LaunchedEffect(uiState.step) {
         if (uiState.step == SplashStep.DONE) {
             delay(600)
@@ -122,10 +145,36 @@ fun SplashScreen(
         }
     }
 
+    // ===== Tombol pemulihan untuk izin yang ditolak =====
+    val deniedAction: Pair<String, () -> Unit>? = when (uiState.step) {
+        SplashStep.REQUEST_FOREGROUND_LOCATION ->
+            if (uiState.locationStatus == PermissionItemStatus.DENIED)
+                "Buka Pengaturan — izinkan Lokasi" to { openAppSettings() } else null
+
+        SplashStep.REQUEST_BACKGROUND_LOCATION ->
+            if (uiState.backgroundLocationStatus == PermissionItemStatus.DENIED)
+                "Buka Pengaturan — pilih Lokasi: Allow all the time" to { openAppSettings() }
+            else null
+
+        SplashStep.REQUEST_NOTIFICATION ->
+            if (uiState.notificationStatus == PermissionItemStatus.DENIED)
+                "Buka Pengaturan — izinkan Notifikasi" to { openAppSettings() } else null
+
+        SplashStep.REQUEST_BATTERY ->
+            if (uiState.batteryStatus == PermissionItemStatus.DENIED)
+                "Coba Lagi — Izinkan Baterai" to { requestBatteryExemption() } else null
+
+        else -> null
+    }
+
     // Label khusus item lokasi: detail "selalu" vs "saat digunakan"
+    val requiresBackground = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
     val locationLabel: String? = when {
         uiState.locationStatus == PermissionItemStatus.GRANTED &&
-                uiState.isBackgroundLocationGranted -> "Selalu diizinkan"
+                (!requiresBackground ||
+                        uiState.backgroundLocationStatus == PermissionItemStatus.GRANTED) ->
+            "Selalu diizinkan"
+
         uiState.locationStatus == PermissionItemStatus.GRANTED -> "Saat digunakan"
         else -> null
     }
@@ -184,8 +233,13 @@ fun SplashScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Izin yang disarankan",
+                            text = "Izin yang diperlukan",
                             style = MaterialTheme.typography.titleSmall
+                        )
+                        Text(
+                            text = "Semua izin wajib diberikan sebelum masuk aplikasi",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(Modifier.size(12.dp))
 
@@ -198,25 +252,43 @@ fun SplashScreen(
                                     modifier = Modifier.size(22.dp)
                                 )
                             },
-                            title = "Lokasi (selalu izinkan)",
+                            title = "Lokasi",
                             status = uiState.locationStatus,
                             statusLabelOverride = locationLabel
                         )
                         Spacer(Modifier.size(8.dp))
 
-                        PermissionRow(
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Filled.Notifications,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            },
-                            title = "Notifikasi",
-                            status = uiState.notificationStatus
-                        )
-                        Spacer(Modifier.size(8.dp))
+                        if (requiresBackground) {
+                            PermissionRow(
+                                icon = {
+                                    Icon(
+                                        imageVector = Icons.Filled.LocationOn,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                },
+                                title = "Lokasi latar belakang (selalu)",
+                                status = uiState.backgroundLocationStatus
+                            )
+                            Spacer(Modifier.size(8.dp))
+                        }
+
+                        if (Build.VERSION.SDK_INT >= 33) {
+                            PermissionRow(
+                                icon = {
+                                    Icon(
+                                        imageVector = Icons.Filled.Notifications,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                },
+                                title = "Notifikasi",
+                                status = uiState.notificationStatus
+                            )
+                            Spacer(Modifier.size(8.dp))
+                        }
 
                         PermissionRow(
                             icon = {
@@ -229,18 +301,18 @@ fun SplashScreen(
 
                         Spacer(Modifier.size(12.dp))
 
-                        when (uiState.step) {
-                            SplashStep.DONE ->
+                        if (uiState.step == SplashStep.DONE) {
+                            Button(
+                                onClick = onFinished,
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text("Mulai") }
+                        } else {
+                            deniedAction?.let { (label, action) ->
                                 Button(
-                                    onClick = onFinished,
+                                    onClick = action,
                                     modifier = Modifier.fillMaxWidth()
-                                ) { Text("Mulai") }
-
-                            else ->
-                                TextButton(
-                                    onClick = viewModel::skipAll,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) { Text("Lewati & lanjut ke aplikasi") }
+                                ) { Text(label) }
+                            }
                         }
                     }
                 }
