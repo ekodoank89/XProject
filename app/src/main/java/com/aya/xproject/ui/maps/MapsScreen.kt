@@ -40,7 +40,7 @@ fun MapsScreen(
         )
     }
 
-    // Saat peta berhenti bergerak, kirim titik tengah terbaru ke ViewModel
+    // Peta berhenti bergerak → simpan posisi pin (titik tengah) ke repository
     LaunchedEffect(cameraPositionState.isMoving) {
         if (!cameraPositionState.isMoving) {
             val target = cameraPositionState.position.target
@@ -51,15 +51,27 @@ fun MapsScreen(
         }
     }
 
+    // Ada permintaan pindah kamera (dari menu Favorite) → animasikan, lalu tandai selesai
+    LaunchedEffect(uiState.pendingCameraTarget) {
+        val target = uiState.pendingCameraTarget ?: return@LaunchedEffect
+        cameraPositionState.animate(
+            CameraPosition.fromLatLngZoom(
+                LatLng(target.latitude, target.longitude),
+                cameraPositionState.position.zoom
+            ),
+            700
+        )
+        viewModel.onCameraTargetConsumed()
+    }
+
     Box(modifier = modifier.fillMaxSize()) {
 
-        // Peta memenuhi seluruh layar
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState
         )
 
-        // Pin overlay: selalu di tengah layar, tidak ikut bergeser.
+        // Pin overlay: selalu di tengah layar.
         // Offset -24dp (setengah tinggi ikon 48dp) agar ujung pin tepat di titik tengah.
         Icon(
             imageVector = Icons.Filled.LocationOn,
@@ -71,7 +83,6 @@ fun MapsScreen(
                 .offset(y = (-24).dp)
         )
 
-        // Chip koordinat: hanya tampil jika switch di menu OPT aktif
         if (uiState.isCoordinateChipVisible) {
             Surface(
                 modifier = Modifier
