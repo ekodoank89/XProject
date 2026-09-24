@@ -78,6 +78,14 @@ fun MapsScreen(
     viewModel: MapsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // ⏳ Tunggu posisi tersimpan dimuat dari DataStore agar kamera
+    // langsung mulai di posisi terakhir (bukan koordinat default).
+    if (!uiState.isCenterLoaded) {
+        Box(modifier = modifier.fillMaxSize())
+        return
+    }
+
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -88,13 +96,10 @@ fun MapsScreen(
     }
 
     // ===== Titik biru lokasi (my location) =====
-    // Flag hanya boleh true jika izin fine location benar-benar terpenuhi,
-    // kalau tidak app akan crash (SecurityException).
     var isMyLocationEnabled by remember {
         mutableStateOf(hasFineLocationPermission(context))
     }
 
-    // Saat kembali ke app, status izin dicek ulang agar titik biru mengikuti kondisi terkini.
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -118,7 +123,7 @@ fun MapsScreen(
         return MapCenter(target.latitude, target.longitude)
     }
 
-    // Peta berhenti bergerak → simpan posisi pin (titik tengah) ke repository
+    // Peta berhenti bergerak → simpan posisi pin (titik tengah) ke penyimpanan permanen
     LaunchedEffect(cameraPositionState.isMoving) {
         if (!cameraPositionState.isMoving) {
             viewModel.onMapCenterChanged(
@@ -133,8 +138,6 @@ fun MapsScreen(
     LaunchedEffect(uiState.pendingCameraTarget) {
         val target = uiState.pendingCameraTarget ?: return@LaunchedEffect
         val zoom = cameraPositionState.position.zoom
-        // Assign posisi langsung = kamera berpindah seketika (jump),
-        // bukan animate() yang menggerakkan kamera selama beberapa ratus ms.
         cameraPositionState.position = CameraPosition.fromLatLngZoom(
             LatLng(target.latitude, target.longitude),
             zoom
@@ -251,7 +254,6 @@ fun MapsScreen(
         )
 
         // ===== Tombol play/stop GRB & GJK: kiri bawah, tersusun vertikal =====
-        // onClick mengirim posisi kamera LIVE → marker presisi di titik tengah layar.
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
