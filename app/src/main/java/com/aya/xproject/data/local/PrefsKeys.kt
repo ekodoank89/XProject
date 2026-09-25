@@ -21,6 +21,9 @@ object PrefsKeys {
     val GJK_JITTER_DOT = booleanPreferencesKey("gjk_jitter_dot_visible")
     val GJK_RADIUS_CIRCLE = booleanPreferencesKey("gjk_radius_circle_visible")
 
+    // Visual peta: list marker manual (gold)
+    val MANUAL_MARKERS_VISIBLE = booleanPreferencesKey("manual_markers_visible")
+
     val CENTER_LAT = stringPreferencesKey("center_lat")
     val CENTER_LNG = stringPreferencesKey("center_lng")
     val CENTER_ZOOM = floatPreferencesKey("center_zoom")
