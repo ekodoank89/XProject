@@ -60,6 +60,10 @@ class OptionViewModel @Inject constructor(
         mapSettingsRepository.setGjkRadiusCircleVisible(visible)
     }
 
+    fun onManualMarkerVisibilityChanged(visible: Boolean) {
+        mapSettingsRepository.setManualMarkerVisible(visible)
+    }
+
     fun exportFavorites(uri: Uri) {
         viewModelScope.launch {
             favoriteBackupManager.export(uri)
