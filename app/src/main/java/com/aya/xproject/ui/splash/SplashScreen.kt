@@ -1,5 +1,6 @@
 package com.aya.xproject.ui.splash
 
+import com.xproject.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import android.Manifest
 import android.content.Intent
