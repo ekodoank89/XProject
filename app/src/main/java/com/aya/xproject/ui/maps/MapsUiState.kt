@@ -1,6 +1,7 @@
 package com.aya.xproject.ui.maps
 
 import com.aya.xproject.data.repository.CameraRequest
+import com.aya.xproject.domain.model.ManualMarker
 import com.aya.xproject.domain.model.MapCenter
 
 data class MapsUiState(
@@ -25,5 +26,7 @@ data class MapsUiState(
     val gjkJitterPosition: MapCenter? = null,
     // Radius lingkaran jitter dari slider JIT (non-null saat jitter aktif)
     val grbJitterRadius: Float? = null,
-    val gjkJitterRadius: Float? = null
+    val gjkJitterRadius: Float? = null,
+    // Marker manual (pengukuran radius) dari menu OPT > tab Marker
+    val manualMarkers: List<ManualMarker> = emptyList()
 )
