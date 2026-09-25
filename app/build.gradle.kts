@@ -14,8 +14,8 @@ android {
         applicationId = "com.aya.xproject"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2          // naik: rilis fitur baru
+        versionName = "1.1.0"    // selaraskan dengan tag berikutnya (v1.1.0)
 
         manifestPlaceholders["MAPS_API_KEY"] = System.getenv("MAPS_API_KEY") ?: ""
     }
@@ -76,6 +76,11 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.androidx.datastore.preferences)
+
+    // Xposed API (classic, didukung penuh LSPosed modern).
+    // compileOnly: API TIDAK dibundel ke APK — kelas aslinya disediakan
+    // oleh framework (LSPosed) saat runtime, jadi tidak ada konflik.
+    compileOnly(libs.xposed.api)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
