@@ -3,6 +3,7 @@ package com.aya.xproject.ui.maps
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -57,10 +58,13 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MarkerComposable
+import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
 import kotlinx.coroutines.launch
 import java.util.Locale
+import kotlin.math.cos
+import kotlin.math.sin
 
 /** Zoom maksimal yang didukung Google Maps. */
 private const val MAX_ZOOM = 21f
@@ -78,6 +82,10 @@ private val GjkRed = Color(0xFFC62828)
 
 // Warna gold untuk marker manual (pengukuran radius)
 private val MarkerGold = Color(0xFFD4AF37)
+private val MarkerGoldDark = Color(0xFF7A6500) // teks label derajat agar terbaca
+
+/** Arah garis jari-jari (derajat): utara, timur, selatan, barat. */
+private val DegreeBearings = listOf(0.0, 90.0, 180.0, 270.0)
 
 @Composable
 fun MapsScreen(
@@ -227,7 +235,7 @@ fun MapsScreen(
                 mapToolbarEnabled = false
             )
         ) {
-            // ⚠️ Semua overlay (Circle/Marker) WAJIB di dalam content lambda GoogleMap.
+            // ⚠️ Semua overlay (Circle/Polyline/Marker) WAJIB di dalam content lambda GoogleMap.
 
             // ===== Lingkaran radius jitter GRB (bisa disembunyikan dari OPT) =====
             if (uiState.isGrbRadiusCircleVisible) {
@@ -259,16 +267,19 @@ fun MapsScreen(
                 }
             }
 
-            // ===== Marker manual (gold) + lingkaran radius pengukuran =====
+            // ===== Marker manual (gold) + lingkaran radius + garis jari derajat =====
             uiState.manualMarkers.forEach { marker ->
                 val position = LatLng(marker.latitude, marker.longitude)
+                val centerPoint = MapCenter(marker.latitude, marker.longitude)
                 val manualMarkerState = rememberMarkerState(
                     key = "manual:${marker.id}:${marker.latitude},${marker.longitude}",
                     position = position
                 )
 
-                // Lingkaran radius: hanya digambar jika radius sudah di-set (> 0)
+                // Lingkaran + garis derajat: hanya jika radius sudah di-set (> 0)
                 if (marker.radiusMeters > 0.0) {
+
+                    // Lingkaran radius pengukuran
                     Circle(
                         center = position,
                         radius = marker.radiusMeters,
@@ -276,6 +287,28 @@ fun MapsScreen(
                         strokeWidth = 3f,
                         fillColor = MarkerGold.copy(alpha = 0.12f)
                     )
+
+                    // Garis jari derajat 0°/90°/180°/270°: pusat → tepi lingkaran,
+                    // plus label derajat di ujung garis
+                    DegreeBearings.forEach { bearing ->
+                        val edge = destinationPoint(centerPoint, bearing, marker.radiusMeters)
+                        Polyline(
+                            points = listOf(position, LatLng(edge.latitude, edge.longitude)),
+                            color = MarkerGold,
+                            width = 3f
+                        )
+                        val labelState = rememberMarkerState(
+                            key = "manual:${marker.id}:deg:$bearing",
+                            position = LatLng(edge.latitude, edge.longitude)
+                        )
+                        MarkerComposable(
+                            keys = arrayOf(marker.id, bearing),
+                            state = labelState,
+                            anchor = Offset(0.5f, 0.5f)
+                        ) {
+                            DegreeLabel(text = "${bearing.toInt()}")
+                        }
+                    }
                 }
 
                 MarkerComposable(
@@ -480,6 +513,25 @@ fun MapsScreen(
     }
 }
 
+/**
+ * Hitung titik tujuan dari [center] sejauh [distanceMeters] ke arah [bearingDeg]
+ * (0 = utara, 90 = timur, 180 = selatan, 270 = barat).
+ * Aproksimasi equirectangular — sangat akurat untuk jarak pendek seperti radius pengukuran.
+ */
+private fun destinationPoint(
+    center: MapCenter,
+    bearingDeg: Double,
+    distanceMeters: Double
+): MapCenter {
+    val bearingRad = Math.toRadians(bearingDeg)
+    val dNorth = distanceMeters * cos(bearingRad)
+    val dEast = distanceMeters * sin(bearingRad)
+    val lat = center.latitude + dNorth / 111_320.0
+    val lng = center.longitude +
+            dEast / (111_320.0 * cos(Math.toRadians(center.latitude)))
+    return MapCenter(lat, lng)
+}
+
 /** Icon pin untuk marker — bentuk & ukuran sama dengan pin overlay tengah layar. */
 @Composable
 private fun PinIcon(tint: Color) {
@@ -489,6 +541,23 @@ private fun PinIcon(tint: Color) {
         tint = tint,
         modifier = Modifier.size(48.dp)
     )
+}
+
+/** Label derajat di ujung garis jari-jari (0/90/180/270). */
+@Composable
+private fun DegreeLabel(text: String) {
+    Surface(
+        shape = RoundedCornerShape(6.dp),
+        color = Color.White.copy(alpha = 0.85f),
+        border = BorderStroke(1.dp, MarkerGold)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            color = MarkerGoldDark,
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+        )
+    }
 }
 
 /** Titik jitter di peta: lingkaran kecil berisi warna aksen + ring putih agar kontras. */
