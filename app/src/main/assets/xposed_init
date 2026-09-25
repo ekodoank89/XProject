@@ -1,1 +1,1 @@
-com.aya.xproject.xposed.XProjectHook
+com.xproject.hook.MainHook
