@@ -14,5 +14,7 @@ data class MapSettings(
     val isGrbJitterDotVisible: Boolean = true,
     val isGrbRadiusCircleVisible: Boolean = true,
     val isGjkJitterDotVisible: Boolean = true,
-    val isGjkRadiusCircleVisible: Boolean = true
+    val isGjkRadiusCircleVisible: Boolean = true,
+    // Visual peta: list marker manual (gold)
+    val isManualMarkerVisible: Boolean = true
 )
