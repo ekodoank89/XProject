@@ -52,31 +52,37 @@ android {
 }
 
 dependencies {
-    // LSPosed / Xposed API (Wajib compileOnly)
+    // LSPosed API
     compileOnly("de.robv.android.xposed:api:82")
 
-    // AndroidX & Compose
+    // AndroidX & Lifecycle
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.navigation.compose)
+
+    // Compose UI & Icons
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.material.icons.extended)
 
-    // Dependency Injection (Hilt)
+    // Hilt
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
 
-    // Room Database
+    // Room
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     kapt(libs.room.compiler)
 
-    // DataStore & Google Maps
+    // DataStore, Location & Maps
     implementation(libs.datastore.preferences)
     implementation(libs.play.services.maps)
+    implementation(libs.play.services.location)
     implementation(libs.maps.compose)
 }
