@@ -28,6 +28,9 @@ object PrefsKeys {
     val MARKER_GRB = stringPreferencesKey("marker_grb")
     val MARKER_GJK = stringPreferencesKey("marker_gjk")
 
+    // Marker manual (pengukuran radius) — list disimpan sebagai JSON
+    val MANUAL_MARKERS = stringPreferencesKey("manual_markers_json")
+
     val FAVORITE_TAB = stringPreferencesKey("favorite_selected_tab")
     val JITTER_TAB = stringPreferencesKey("jitter_selected_tab")
 
