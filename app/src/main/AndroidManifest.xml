@@ -20,6 +20,21 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
 
+        <!-- ===== Deklarasi modul Xposed (terbaca oleh LSPosed Manager) ===== -->
+        <meta-data
+            android:name="xposedmodule"
+            android:value="true" />
+        <meta-data
+            android:name="xposeddescription"
+            android:value="XProject - maps, tracking and measurement utilities" />
+        <meta-data
+            android:name="xposedminversion"
+            android:value="82" />
+        <meta-data
+            android:name="xposedscope"
+            android:resource="@array/xposed_scope" />
+        <!-- ================================================================== -->
+
         <activity
             android:name=".MainActivity"
             android:exported="true">
