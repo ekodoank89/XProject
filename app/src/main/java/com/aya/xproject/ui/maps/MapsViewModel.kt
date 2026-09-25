@@ -48,6 +48,7 @@ class MapsViewModel @Inject constructor(
             isGrbRadiusCircleVisible = settings.isGrbRadiusCircleVisible,
             isGjkJitterDotVisible = settings.isGjkJitterDotVisible,
             isGjkRadiusCircleVisible = settings.isGjkRadiusCircleVisible,
+            isManualMarkerVisible = settings.isManualMarkerVisible,
             pendingCameraTarget = pendingTarget,
             grbMarker = grb,
             gjkMarker = gjk
