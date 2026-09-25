@@ -76,6 +76,9 @@ private val TrackButtonSize = 80.dp
 private val GrbGreen = Color(0xFF2E7D32)
 private val GjkRed = Color(0xFFC62828)
 
+// Warna gold untuk marker manual (pengukuran radius)
+private val MarkerGold = Color(0xFFD4AF37)
+
 @Composable
 fun MapsScreen(
     modifier: Modifier = Modifier,
@@ -253,6 +256,34 @@ fun MapsScreen(
                             fillColor = GjkRed.copy(alpha = 0.15f)
                         )
                     }
+                }
+            }
+
+            // ===== Marker manual (gold) + lingkaran radius pengukuran =====
+            uiState.manualMarkers.forEach { marker ->
+                val position = LatLng(marker.latitude, marker.longitude)
+                val manualMarkerState = rememberMarkerState(
+                    key = "manual:${marker.id}:${marker.latitude},${marker.longitude}",
+                    position = position
+                )
+
+                // Lingkaran radius: hanya digambar jika radius sudah di-set (> 0)
+                if (marker.radiusMeters > 0.0) {
+                    Circle(
+                        center = position,
+                        radius = marker.radiusMeters,
+                        strokeColor = MarkerGold,
+                        strokeWidth = 3f,
+                        fillColor = MarkerGold.copy(alpha = 0.12f)
+                    )
+                }
+
+                MarkerComposable(
+                    keys = arrayOf(marker.id, marker.latitude, marker.longitude),
+                    state = manualMarkerState,
+                    title = marker.name
+                ) {
+                    PinIcon(tint = MarkerGold)
                 }
             }
 
