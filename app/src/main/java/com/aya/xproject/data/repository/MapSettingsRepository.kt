@@ -38,7 +38,8 @@ class MapSettingsRepository @Inject constructor(
                 isGrbJitterDotVisible = prefs[PrefsKeys.GRB_JITTER_DOT] ?: true,
                 isGrbRadiusCircleVisible = prefs[PrefsKeys.GRB_RADIUS_CIRCLE] ?: true,
                 isGjkJitterDotVisible = prefs[PrefsKeys.GJK_JITTER_DOT] ?: true,
-                isGjkRadiusCircleVisible = prefs[PrefsKeys.GJK_RADIUS_CIRCLE] ?: true
+                isGjkRadiusCircleVisible = prefs[PrefsKeys.GJK_RADIUS_CIRCLE] ?: true,
+                isManualMarkerVisible = prefs[PrefsKeys.MANUAL_MARKERS_VISIBLE] ?: true
             )
         }
         .stateIn(scope, SharingStarted.Eagerly, MapSettings())
@@ -69,6 +70,9 @@ class MapSettingsRepository @Inject constructor(
 
     fun setGjkRadiusCircleVisible(visible: Boolean) =
         write { it[PrefsKeys.GJK_RADIUS_CIRCLE] = visible }
+
+    fun setManualMarkerVisible(visible: Boolean) =
+        write { it[PrefsKeys.MANUAL_MARKERS_VISIBLE] = visible }
 
     private fun write(block: (MutablePreferences) -> Unit) {
         scope.launch { dataStore.edit(block) }
