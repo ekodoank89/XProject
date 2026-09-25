@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
-import android.os.PowerManager
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -43,11 +42,6 @@ class SplashViewModel @Inject constructor(
         advance()
     }
 
-    fun onBatteryResult(allowed: Boolean) {
-        _uiState.update { it.copy(batteryStatus = statusOf(allowed)) }
-        advance()
-    }
-
     /**
      * Baca ulang status izin asli dari sistem.
      * Dipanggil saat kembali dari halaman Pengaturan: izin yang baru
@@ -69,9 +63,7 @@ class SplashViewModel @Inject constructor(
                     isGranted(Manifest.permission.POST_NOTIFICATIONS) ->
                         PermissionItemStatus.GRANTED
                     else -> st.notificationStatus
-                },
-                batteryStatus = if (isBatteryExempt()) PermissionItemStatus.GRANTED
-                else st.batteryStatus
+                }
             )
         }
         advance()
@@ -97,9 +89,6 @@ class SplashViewModel @Inject constructor(
                             st.notificationStatus != PermissionItemStatus.GRANTED ->
                         SplashStep.REQUEST_NOTIFICATION
 
-                    st.batteryStatus != PermissionItemStatus.GRANTED ->
-                        SplashStep.REQUEST_BATTERY
-
                     else -> SplashStep.DONE
                 }
             )
@@ -112,10 +101,6 @@ class SplashViewModel @Inject constructor(
     private fun requiresBackground() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
 
     private fun requiresNotification() = Build.VERSION.SDK_INT >= 33
-
-    private fun isBatteryExempt() =
-        (context.getSystemService(Context.POWER_SERVICE) as PowerManager)
-            .isIgnoringBatteryOptimizations(context.packageName)
 
     private fun isGranted(permission: String) =
         ContextCompat.checkSelfPermission(context, permission) ==
@@ -136,8 +121,6 @@ class SplashViewModel @Inject constructor(
             isGranted(Manifest.permission.POST_NOTIFICATIONS) ->
                 PermissionItemStatus.GRANTED
             else -> PermissionItemStatus.WAITING
-        },
-        batteryStatus = if (isBatteryExempt()) PermissionItemStatus.GRANTED
-        else PermissionItemStatus.WAITING
+        }
     )
 }
