@@ -1,0 +1,7 @@
+<resources>
+    <!-- Scope modul Xposed: aplikasi target yang di-hook.
+         Untuk demo/verifikasi: aplikasi Settings. Ganti/tambah sesuai kebutuhan. -->
+    <string-array name="xposed_scope">
+        <item>com.android.settings</item>
+    </string-array>
+</resources>
