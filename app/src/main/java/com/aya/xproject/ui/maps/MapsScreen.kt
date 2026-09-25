@@ -3,7 +3,6 @@ package com.aya.xproject.ui.maps
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -82,7 +81,6 @@ private val GjkRed = Color(0xFFC62828)
 
 // Warna gold untuk marker manual (pengukuran radius)
 private val MarkerGold = Color(0xFFD4AF37)
-private val MarkerGoldDark = Color(0xFF7A6500) // teks label derajat agar terbaca
 
 /** Arah garis jari-jari (derajat): utara, timur, selatan, barat. */
 private val DegreeBearings = listOf(0.0, 90.0, 180.0, 270.0)
@@ -288,8 +286,7 @@ fun MapsScreen(
                         fillColor = MarkerGold.copy(alpha = 0.12f)
                     )
 
-                    // Garis jari derajat 0°/90°/180°/270°: pusat → tepi lingkaran,
-                    // plus label derajat di ujung garis
+                    // Garis jari derajat 0°/90°/180°/270°: pusat → tepi lingkaran
                     DegreeBearings.forEach { bearing ->
                         val edge = destinationPoint(centerPoint, bearing, marker.radiusMeters)
                         Polyline(
@@ -297,17 +294,6 @@ fun MapsScreen(
                             color = MarkerGold,
                             width = 3f
                         )
-                        val labelState = rememberMarkerState(
-                            key = "manual:${marker.id}:deg:$bearing",
-                            position = LatLng(edge.latitude, edge.longitude)
-                        )
-                        MarkerComposable(
-                            keys = arrayOf(marker.id, bearing),
-                            state = labelState,
-                            anchor = Offset(0.5f, 0.5f)
-                        ) {
-                            DegreeLabel(text = "${bearing.toInt()}")
-                        }
                     }
                 }
 
@@ -541,23 +527,6 @@ private fun PinIcon(tint: Color) {
         tint = tint,
         modifier = Modifier.size(48.dp)
     )
-}
-
-/** Label derajat di ujung garis jari-jari (0/90/180/270). */
-@Composable
-private fun DegreeLabel(text: String) {
-    Surface(
-        shape = RoundedCornerShape(6.dp),
-        color = Color.White.copy(alpha = 0.85f),
-        border = BorderStroke(1.dp, MarkerGold)
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall,
-            color = MarkerGoldDark,
-            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-        )
-    }
 }
 
 /** Titik jitter di peta: lingkaran kecil berisi warna aksen + ring putih agar kontras. */
