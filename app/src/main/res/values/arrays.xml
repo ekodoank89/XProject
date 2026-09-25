@@ -1,7 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Scope modul Xposed: aplikasi target yang di-hook.
-         Untuk demo/verifikasi: aplikasi Settings. Ganti/tambah sesuai kebutuhan. -->
     <string-array name="xposed_scope">
-        <item>com.nstudio.locationinfo</item>
+        <item>com.gojek.partner</item>
+        <item>com.grabtaxi.driver2</item>
     </string-array>
 </resources>
