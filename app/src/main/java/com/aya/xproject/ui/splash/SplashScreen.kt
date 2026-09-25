@@ -1,7 +1,6 @@
 package com.aya.xproject.ui.splash
 
 import android.Manifest
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -80,12 +79,6 @@ fun SplashScreen(
         ActivityResultContracts.RequestPermission()
     ) { granted -> viewModel.onNotificationResult(granted) }
 
-    val batteryLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        viewModel.onBatteryResult(result.resultCode == Activity.RESULT_OK)
-    }
-
     // Launcher halaman Pengaturan: saat kembali, status izin dicek ulang
     val settingsLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -98,15 +91,6 @@ fun SplashScreen(
                 Uri.fromParts("package", context.packageName, null)
             )
         )
-    }
-
-    fun requestBatteryExemption() {
-        runCatching {
-            batteryLauncher.launch(
-                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-                    .setData(Uri.parse("package:${context.packageName}"))
-            )
-        }.onFailure { viewModel.onBatteryResult(false) }
     }
 
     // ===== Mesin state splash =====
@@ -124,15 +108,15 @@ fun SplashScreen(
 
             SplashStep.REQUEST_BACKGROUND_LOCATION ->
                 if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
+                    // Android 10: dialog dengan opsi "Allow all the time"
                     backgroundDialogLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
                 } else {
+                    // Android 11+: sistem melarang dialog, wajib lewat Pengaturan
                     openAppSettings()
                 }
 
             SplashStep.REQUEST_NOTIFICATION ->
                 notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-
-            SplashStep.REQUEST_BATTERY -> requestBatteryExemption()
 
             SplashStep.LOADING, SplashStep.DONE -> Unit
         }
@@ -160,10 +144,6 @@ fun SplashScreen(
         SplashStep.REQUEST_NOTIFICATION ->
             if (uiState.notificationStatus == PermissionItemStatus.DENIED)
                 "Buka Pengaturan — izinkan Notifikasi" to { openAppSettings() } else null
-
-        SplashStep.REQUEST_BATTERY ->
-            if (uiState.batteryStatus == PermissionItemStatus.DENIED)
-                "Coba Lagi — Izinkan Baterai" to { requestBatteryExemption() } else null
 
         else -> null
     }
@@ -284,14 +264,6 @@ fun SplashScreen(
                             )
                             Spacer(Modifier.size(8.dp))
                         }
-
-                        PermissionRow(
-                            icon = {
-                                Text(text = "🔋", fontSize = 16.sp)
-                            },
-                            title = "Baterai tanpa pembatasan",
-                            status = uiState.batteryStatus
-                        )
 
                         Spacer(Modifier.size(12.dp))
 
