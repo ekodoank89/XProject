@@ -266,43 +266,46 @@ fun MapsScreen(
             }
 
             // ===== Marker manual (gold) + lingkaran radius + garis jari derajat =====
-            uiState.manualMarkers.forEach { marker ->
-                val position = LatLng(marker.latitude, marker.longitude)
-                val centerPoint = MapCenter(marker.latitude, marker.longitude)
-                val manualMarkerState = rememberMarkerState(
-                    key = "manual:${marker.id}:${marker.latitude},${marker.longitude}",
-                    position = position
-                )
-
-                // Lingkaran + garis derajat: hanya jika radius sudah di-set (> 0)
-                if (marker.radiusMeters > 0.0) {
-
-                    // Lingkaran radius pengukuran
-                    Circle(
-                        center = position,
-                        radius = marker.radiusMeters,
-                        strokeColor = MarkerGold,
-                        strokeWidth = 3f,
-                        fillColor = MarkerGold.copy(alpha = 0.12f)
+            // Bisa disembunyikan seluruhnya dari OPT > Hide > "List marker"
+            if (uiState.isManualMarkerVisible) {
+                uiState.manualMarkers.forEach { marker ->
+                    val position = LatLng(marker.latitude, marker.longitude)
+                    val centerPoint = MapCenter(marker.latitude, marker.longitude)
+                    val manualMarkerState = rememberMarkerState(
+                        key = "manual:${marker.id}:${marker.latitude},${marker.longitude}",
+                        position = position
                     )
 
-                    // Garis jari derajat 0°/90°/180°/270°: pusat → tepi lingkaran
-                    DegreeBearings.forEach { bearing ->
-                        val edge = destinationPoint(centerPoint, bearing, marker.radiusMeters)
-                        Polyline(
-                            points = listOf(position, LatLng(edge.latitude, edge.longitude)),
-                            color = MarkerGold,
-                            width = 3f
-                        )
-                    }
-                }
+                    // Lingkaran + garis derajat: hanya jika radius sudah di-set (> 0)
+                    if (marker.radiusMeters > 0.0) {
 
-                MarkerComposable(
-                    keys = arrayOf(marker.id, marker.latitude, marker.longitude),
-                    state = manualMarkerState,
-                    title = marker.name
-                ) {
-                    PinIcon(tint = MarkerGold)
+                        // Lingkaran radius pengukuran
+                        Circle(
+                            center = position,
+                            radius = marker.radiusMeters,
+                            strokeColor = MarkerGold,
+                            strokeWidth = 3f,
+                            fillColor = MarkerGold.copy(alpha = 0.12f)
+                        )
+
+                        // Garis jari derajat 0°/90°/180°/270°: pusat → tepi lingkaran
+                        DegreeBearings.forEach { bearing ->
+                            val edge = destinationPoint(centerPoint, bearing, marker.radiusMeters)
+                            Polyline(
+                                points = listOf(position, LatLng(edge.latitude, edge.longitude)),
+                                color = MarkerGold,
+                                width = 3f
+                            )
+                        }
+                    }
+
+                    MarkerComposable(
+                        keys = arrayOf(marker.id, marker.latitude, marker.longitude),
+                        state = manualMarkerState,
+                        title = marker.name
+                    ) {
+                        PinIcon(tint = MarkerGold)
+                    }
                 }
             }
 
