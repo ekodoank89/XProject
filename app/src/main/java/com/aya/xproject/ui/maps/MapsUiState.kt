@@ -18,6 +18,8 @@ data class MapsUiState(
     val isGrbRadiusCircleVisible: Boolean = true,
     val isGjkJitterDotVisible: Boolean = true,
     val isGjkRadiusCircleVisible: Boolean = true,
+    // Visual peta: list marker manual (gold)
+    val isManualMarkerVisible: Boolean = true,
     val pendingCameraTarget: CameraRequest? = null,
     val grbMarker: MapCenter? = null,
     val gjkMarker: MapCenter? = null,
