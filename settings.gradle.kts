@@ -10,6 +10,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // Repo resmi API Xposed — satu-satunya sumber artefak
+        // de.robv.android.xposed:api (tidak tersedia di Google/MavenCentral)
+        maven { url = uri("https://api.xposed.info/") }
     }
 }
 
