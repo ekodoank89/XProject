@@ -1,8 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.kapt)
-    alias(libs.plugins.hilt.android)
+    id("kotlin-kapt")
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -52,10 +52,10 @@ android {
 }
 
 dependencies {
-    // Xposed / LSPosed API (Wajib compileOnly)
+    // LSPosed / Xposed API (Wajib compileOnly)
     compileOnly("de.robv.android.xposed:api:82")
 
-    // Dependencies bawaan XProject
+    // AndroidX & Compose
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -64,14 +64,18 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    
-    // Hilt, Room, DataStore, Google Maps
+
+    // Dependency Injection (Hilt)
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+
+    // Room Database
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     kapt(libs.room.compiler)
+
+    // DataStore & Google Maps
     implementation(libs.datastore.preferences)
     implementation(libs.play.services.maps)
     implementation(libs.maps.compose)
