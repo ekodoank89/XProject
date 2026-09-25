@@ -6,7 +6,6 @@ enum class SplashStep {
     REQUEST_FOREGROUND_LOCATION,
     REQUEST_BACKGROUND_LOCATION,
     REQUEST_NOTIFICATION,
-    REQUEST_BATTERY,
     DONE
 }
 
@@ -23,6 +22,5 @@ data class SplashUiState(
     val step: SplashStep = SplashStep.LOADING,
     val locationStatus: PermissionItemStatus = PermissionItemStatus.WAITING,
     val backgroundLocationStatus: PermissionItemStatus = PermissionItemStatus.WAITING,
-    val notificationStatus: PermissionItemStatus = PermissionItemStatus.WAITING,
-    val batteryStatus: PermissionItemStatus = PermissionItemStatus.WAITING
+    val notificationStatus: PermissionItemStatus = PermissionItemStatus.WAITING
 )
