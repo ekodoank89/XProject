@@ -87,12 +87,6 @@ fun OptionScreen(
             .fillMaxSize()
             .statusBarsPadding()
     ) {
-        Text(
-            text = "Option",
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(16.dp)
-        )
-
         // ===== Tab menu: Hide / Marker / Data =====
         TabRow(selectedTabIndex = selectedTab.ordinal) {
             OptionTab.entries.forEach { tab ->
@@ -194,7 +188,7 @@ private fun HideTabContent(
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-        // ===== Section: Visual peta (titik jitter & lingkaran radius) =====
+        // ===== Section: Visual peta (titik jitter, lingkaran radius, marker manual) =====
         OptionSwitchItem(
             title = "Titik jitter GRB",
             subtitle = "Tampilkan/sembunyikan titik bergerak jitter GRB di peta",
@@ -221,6 +215,13 @@ private fun HideTabContent(
             subtitle = "Tampilkan/sembunyikan lingkaran radius jitter GJK di peta",
             checked = settings.isGjkRadiusCircleVisible,
             onCheckedChange = { viewModel.onGjkRadiusCircleVisibilityChanged(it) }
+        )
+
+        OptionSwitchItem(
+            title = "List marker",
+            subtitle = "Tampilkan/sembunyikan list marker manual (gold) di peta",
+            checked = settings.isManualMarkerVisible,
+            onCheckedChange = { viewModel.onManualMarkerVisibilityChanged(it) }
         )
     }
 }
