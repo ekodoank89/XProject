@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aya.xproject.data.jitter.JitterEngine
 import com.aya.xproject.data.repository.JitterRepository
+import com.aya.xproject.data.repository.ManualMarkerRepository
 import com.aya.xproject.data.repository.MapCenterRepository
 import com.aya.xproject.data.repository.MapSettingsRepository
 import com.aya.xproject.data.repository.MarkerRepository
@@ -22,7 +23,8 @@ class MapsViewModel @Inject constructor(
     mapSettingsRepository: MapSettingsRepository,
     private val markerRepository: MarkerRepository,
     jitterEngine: JitterEngine,
-    jitterRepository: JitterRepository
+    jitterRepository: JitterRepository,
+    manualMarkerRepository: ManualMarkerRepository
 ) : ViewModel() {
 
     // State dasar: peta, preferensi, marker
@@ -52,13 +54,14 @@ class MapsViewModel @Inject constructor(
         )
     }
 
-    // Gabungkan dengan posisi jitter (bergerak live) + radius dari slider JIT (live)
+    // Gabungkan dengan posisi jitter (live), radius slider (live), dan marker manual
     val uiState: StateFlow<MapsUiState> = combine(
         baseState,
         jitterEngine.grbPosition,
         jitterEngine.gjkPosition,
-        jitterRepository.settings
-    ) { state, grbJitter, gjkJitter, jitterSettings ->
+        jitterRepository.settings,
+        manualMarkerRepository.markers
+    ) { state, grbJitter, gjkJitter, jitterSettings, manualMarkers ->
         state.copy(
             grbJitterPosition = grbJitter,
             gjkJitterPosition = gjkJitter,
@@ -69,7 +72,8 @@ class MapsViewModel @Inject constructor(
             },
             gjkJitterRadius = state.gjkMarker?.let {
                 jitterSettings[JitterTab.GJK]?.maxRadiusMeters
-            }
+            },
+            manualMarkers = manualMarkers
         )
     }.stateIn(
         scope = viewModelScope,
