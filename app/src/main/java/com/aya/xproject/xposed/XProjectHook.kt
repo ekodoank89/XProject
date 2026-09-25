@@ -1,51 +1,26 @@
 package com.aya.xproject.xposed
 
-import android.os.Bundle
 import de.robv.android.xposed.IXposedHookLoadPackage
-import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
-import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 
 /**
  * Entry point XProject sebagai modul Xposed.
- * Nama class ini terdaftar di app/src/main/assets/xposed_init.
  *
- * MENTAL MODEL PENTING:
- * - Kode di sini TIDAK berjalan di dalam aplikasi XProject.
- *   Ia disuntikkan ke proses aplikasi lain yang masuk scope
- *   (dipilih di LSPosed Manager).
- * - Saat ini: membuktikan modul aktif via log + demo hook
- *   pada aplikasi Settings. Ganti dengan logika hook asli Anda.
+ * VERSI HARDENED (verifikasi tahap 1):
+ * - TIDAK meng-hook method apa pun. Hanya menulis satu baris log
+ *   saat modul dimuat ke sebuah proses.
+ * - LSPosed hanya menyuntikkan modul ini ke aplikasi dalam scope
+ *   (saat ini: Settings), proses lain tidak tersentuh.
+ *
+ * Setelah terbukti boot stabil + log muncul, hook target asli
+ * ditambahkan secara bertahap di iterasi berikutnya.
  */
 class XProjectHook : IXposedHookLoadPackage {
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
-        // Bukti modul dimuat ke sebuah proses — cek di LSPosed Manager > Logs
-        XposedBridge.log("[XProject] Loaded into: ${lpparam.packageName}")
-
-        // Demo hook hanya untuk scope demo (aplikasi Settings)
-        if (lpparam.packageName != DEMO_SCOPE) return
-
         runCatching {
-            XposedHelpers.findAndHookMethod(
-                "com.android.settings.SettingsActivity",
-                lpparam.classLoader,
-                "onCreate",
-                Bundle::class.java,
-                object : XC_MethodHook() {
-                    override fun afterHookedMethod(param: XC_MethodHook.MethodHookParam) {
-                        // Log saja dulu (tanpa mengubah perilaku apa pun)
-                        XposedBridge.log("[XProject] Settings dibuka - modul bekerja!")
-                    }
-                }
-            )
-        }.onFailure {
-            XposedBridge.log("[XProject] Demo hook gagal: ${it.message}")
+            XposedBridge.log("[XProject] Loaded into: ${lpparam.packageName}")
         }
-    }
-
-    private companion object {
-        const val DEMO_SCOPE = "com.android.settings"
     }
 }
