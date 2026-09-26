@@ -16,9 +16,9 @@ class MainActivity : ComponentActivity() {
             MaterialTheme {
                 Surface {
                     //SplashScreen(
-                     //   onNavigateNext = {
+                        onNavigateNext = {
                             // Navigasi ke tampilan utama
-                     //   }
+                        }
                    // )
                 }
             }
