@@ -15,11 +15,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 Surface {
-                    SplashScreen(
-                        onNavigateNext = {
+                    //SplashScreen(
+                     //   onNavigateNext = {
                             // Navigasi ke tampilan utama
-                        }
-                    )
+                     //   }
+                   // )
                 }
             }
         }
