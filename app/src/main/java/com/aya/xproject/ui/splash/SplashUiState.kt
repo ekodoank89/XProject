@@ -1,26 +1,17 @@
 package com.aya.xproject.ui.splash
 
-/** Step aktif pada mesin state splash screen. */
 enum class SplashStep {
+    INITIALIZING,
     LOADING,
     REQUEST_FOREGROUND_LOCATION,
     REQUEST_BACKGROUND_LOCATION,
     REQUEST_NOTIFICATION,
-    DONE
-}
-
-/** Status tiap item izin pada checklist. */
-enum class PermissionItemStatus {
-    WAITING,   // belum diproses
-    GRANTED,   // diizinkan
-    DENIED,    // ditolak pengguna — harus diberikan lewat tombol pemulihan
-    SKIPPED    // tidak berlaku di versi Android ini
+    CHECKING_BATTERY,
+    DONE,
+    COMPLETED
 }
 
 data class SplashUiState(
-    val isMinTimeElapsed: Boolean = false,
-    val step: SplashStep = SplashStep.LOADING,
-    val locationStatus: PermissionItemStatus = PermissionItemStatus.WAITING,
-    val backgroundLocationStatus: PermissionItemStatus = PermissionItemStatus.WAITING,
-    val notificationStatus: PermissionItemStatus = PermissionItemStatus.WAITING
+    val splashStep: SplashStep = SplashStep.INITIALIZING,
+    val isLoading: Boolean = true
 )
