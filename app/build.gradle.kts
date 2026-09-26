@@ -7,12 +7,11 @@ plugins {
     id("com.google.dagger.hilt.android")
 }
 
-android {
-    namespace = "com.xproject"
+namespace = "com.aya.xproject"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.xproject"
+        applicationId = "com.aya.xproject"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
