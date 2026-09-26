@@ -18,9 +18,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -30,27 +27,24 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.xproject.R
 
-const val REQUEST_BATTERY = 1001
-
 @Composable
 fun SplashScreen(
     onNavigateNext: () -> Unit,
     viewModel: SplashViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val splashStep by viewModel.splashStep.collectAsStateWithLifecycle()
-    var batteryStatus by remember { mutableStateOf(false) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val onBatteryResult = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) {
-        batteryStatus = true
         viewModel.onBatteryOptimizationHandled()
     }
 
-    LaunchedEffect(splashStep) {
-        if (splashStep == SplashStep.COMPLETED) {
-            onNavigateNext()
+    LaunchedEffect(uiState.splashStep) {
+        when (uiState.splashStep) {
+            SplashStep.DONE, SplashStep.COMPLETED -> onNavigateNext()
+            else -> {}
         }
     }
 
@@ -67,8 +61,8 @@ fun SplashScreen(
                 modifier = Modifier.size(120.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
-            
-            if (splashStep == SplashStep.CHECKING_BATTERY) {
+
+            if (uiState.splashStep == SplashStep.CHECKING_BATTERY) {
                 Text(text = "Memeriksa Pengaturan Baterai...")
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(onClick = {
@@ -84,10 +78,4 @@ fun SplashScreen(
             }
         }
     }
-}
-
-enum class SplashStep {
-    INITIALIZING,
-    CHECKING_BATTERY,
-    COMPLETED
 }
