@@ -3,24 +3,19 @@ package com.aya.xproject
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import com.aya.xproject.ui.splash.SplashScreen
+import androidx.activity.enableEdgeToEdge
+import com.aya.xproject.ui.main.MainScreen
+import com.aya.xproject.ui.theme.XProjectTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
-            MaterialTheme {
-                Surface {
-                    //SplashScreen(
-                        onNavigateNext = {
-                            // Navigasi ke tampilan utama
-                        }
-                   // )
-                }
+            XProjectTheme {
+                MainScreen()
             }
         }
     }
