@@ -1,48 +1,44 @@
 package com.aya.xproject.data.backup
 
-// Tambahkan import ini di bagian atas file:
-import com.aya.xproject.data.backup.FavoriteBackupCodec
 import android.content.Context
 import android.net.Uri
-import com.aya.xproject.data.repository.FavoriteRepository
+import com.aya.xproject.data.local.FavoriteEntity
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Ekspor/impor data favorite ke/dari file melalui Storage Access Framework
- * (file picker bawaan Android, tanpa izin penyimpanan apa pun).
- */
 @Singleton
 class FavoriteBackupManager @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val favoriteRepository: FavoriteRepository
+    @ApplicationContext private val context: Context
 ) {
-
-    /** Menulis seluruh data favorite ke file pada [uri]. Mengembalikan jumlah data. */
-    suspend fun export(uri: Uri): Result<Int> = withContext(Dispatchers.IO) {
-        runCatching {
-            val favorites = favoriteRepository.getAllOnce()
-            val json = FavoriteBackupCodec.toJson(favorites)
-            val output = context.contentResolver.openOutputStream(uri, "wt")
-                ?: error("Tidak dapat membuka file tujuan")
-            output.use { it.write(json.toByteArray(Charsets.UTF_8)) }
-            favorites.size
+    fun exportBackup(uri: Uri, favorites: List<FavoriteEntity>): Boolean {
+        return try {
+            val json = FavoriteBackupCodec.encode(favorites)
+            context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                OutputStreamWriter(outputStream).use { writer ->
+                    writer.write(json)
+                }
+            }
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
         }
     }
 
-    /** Membaca file pada [uri] lalu MENGGANTI seluruh isi database. Mengembalikan jumlah data. */
-    suspend fun import(uri: Uri): Result<Int> = withContext(Dispatchers.IO) {
-        runCatching {
-            val json = context.contentResolver.openInputStream(uri)?.use { stream ->
-                stream.readBytes().toString(Charsets.UTF_8)
-            } ?: error("Tidak dapat membaca file sumber")
-
-            val favorites = FavoriteBackupCodec.fromJson(json)
-            favoriteRepository.replaceAll(favorites)
-            favorites.size
+    fun importBackup(uri: Uri): List<FavoriteEntity> {
+        return try {
+            val json = context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                InputStreamReader(inputStream).use { reader ->
+                    reader.readText()
+                }
+            } ?: return emptyList()
+            FavoriteBackupCodec.decode(json)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
         }
     }
 }
