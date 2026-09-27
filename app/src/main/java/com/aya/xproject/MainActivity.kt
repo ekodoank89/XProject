@@ -1,10 +1,10 @@
-package com.example.xproject
+package com.aya.xproject
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.example.xproject.ui.theme.XProjectTheme
+import com.aya.xproject.ui.theme.XProjectTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -15,7 +15,6 @@ class MainActivity : ComponentActivity() {
         
         setContent {
             XProjectTheme {
-                // Memanggil tampilan utama aplikasi langsung tanpa splash
                 XProjectApp()
             }
         }
