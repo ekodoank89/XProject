@@ -1,5 +1,7 @@
 package com.aya.xproject.data.backup
 
+// Tambahkan import ini di bagian atas file:
+import com.aya.xproject.data.backup.FavoriteBackupCodec
 import android.content.Context
 import android.net.Uri
 import com.aya.xproject.data.repository.FavoriteRepository
