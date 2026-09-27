@@ -13,6 +13,14 @@ import javax.inject.Singleton
 class FavoriteBackupManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
+    fun export(uri: Uri, favorites: List<FavoriteEntity>): Boolean {
+        return exportBackup(uri, favorites)
+    }
+
+    fun `import`(uri: Uri): List<FavoriteEntity> {
+        return importBackup(uri)
+    }
+
     fun exportBackup(uri: Uri, favorites: List<FavoriteEntity>): Boolean {
         return try {
             val json = FavoriteBackupCodec.encode(favorites)
