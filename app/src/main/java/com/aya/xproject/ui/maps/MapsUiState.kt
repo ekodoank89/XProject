@@ -1,0 +1,34 @@
+package com.aya.xproject.ui.maps
+
+import com.aya.xproject.data.repository.CameraRequest
+import com.aya.xproject.domain.model.ManualMarker
+import com.aya.xproject.domain.model.MapCenter
+
+data class MapsUiState(
+    val center: MapCenter = MapCenter(-6.2088, 106.8456),
+    val zoom: Float = 15f,
+    val isCenterLoaded: Boolean = false,
+    val isCoordinateChipVisible: Boolean = true,
+    val isGrbChipVisible: Boolean = true,
+    val isGjkChipVisible: Boolean = true,
+    val isGrbJitterChipVisible: Boolean = true,
+    val isGjkJitterChipVisible: Boolean = true,
+    // Visual peta: titik jitter & lingkaran radius
+    val isGrbJitterDotVisible: Boolean = true,
+    val isGrbRadiusCircleVisible: Boolean = true,
+    val isGjkJitterDotVisible: Boolean = true,
+    val isGjkRadiusCircleVisible: Boolean = true,
+    // Visual peta: list marker manual (gold)
+    val isManualMarkerVisible: Boolean = true,
+    val pendingCameraTarget: CameraRequest? = null,
+    val grbMarker: MapCenter? = null,
+    val gjkMarker: MapCenter? = null,
+    // Posisi jitter yang bergerak (null = jitter tidak aktif)
+    val grbJitterPosition: MapCenter? = null,
+    val gjkJitterPosition: MapCenter? = null,
+    // Radius lingkaran jitter dari slider JIT (non-null saat jitter aktif)
+    val grbJitterRadius: Float? = null,
+    val gjkJitterRadius: Float? = null,
+    // Marker manual (pengukuran radius) dari menu OPT > tab Marker
+    val manualMarkers: List<ManualMarker> = emptyList()
+)
