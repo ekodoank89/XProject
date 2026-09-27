@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.aya.xproject.ui.navigation.XProjectApp
 import com.aya.xproject.ui.theme.XProjectTheme
 import dagger.hilt.android.AndroidEntryPoint
 
