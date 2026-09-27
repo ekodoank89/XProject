@@ -1,4 +1,4 @@
-package com.example.xproject.ui.navigation
+package com.aya.xproject.ui.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -17,24 +17,14 @@ fun XProjectApp() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "home", // Langsung masuk ke rute utama
+            startDestination = "home",
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("home") {
-                // HomeScreen()
-            }
-            composable("fav") {
-                // FavoriteScreen()
-            }
-            composable("jit") {
-                // JitterScreen()
-            }
-            composable("set") {
-                // SettingsScreen()
-            }
-            composable("opt") {
-                // OptionScreen()
-            }
+            composable("home") { }
+            composable("fav") { }
+            composable("jit") { }
+            composable("set") { }
+            composable("opt") { }
         }
     }
 }
