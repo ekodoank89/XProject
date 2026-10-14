@@ -14,8 +14,8 @@ android {
         applicationId = "com.aya.xproject"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
 
         manifestPlaceholders["MAPS_API_KEY"] = System.getenv("MAPS_API_KEY") ?: ""
     }
@@ -76,6 +76,8 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.androidx.datastore.preferences)
+
+    compileOnly(libs.xposed.api)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
